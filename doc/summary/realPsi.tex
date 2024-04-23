@@ -1,0 +1,88 @@
+\providecommand{\main}{.}
+\documentclass[\main/main]{subfiles}
+\setboolean{isMain}{false}
+
+\begin{document}
+
+\section{For the Case \texorpdfstring{$\ket{\psi}$}{psi} is Real}
+
+Assume that the state $\ket{\psi}$ is real.
+Now, we consider the following optimization problem:
+\begin{mini*}
+    {x \in \mathbb{C}^\abs{\calS_n}}
+    {\norm{x}_1}
+    {\label{prob:primal}}
+    {}
+    \addConstraint{\sum_{\phi_i \in \calS_n}x_i\ket{\phi_i}}{= \ket{\psi}}{}
+\end{mini*}
+\begin{maxi*}
+    {\ket{y} \in \mathbb{C}^{2^n}}
+    {\Re(\braket{\psi}{y})}
+    {\label{prob:dual}}
+    {}
+    \addConstraint{\abs{\braket{\phi_i}{y}}}{\leq 1,\quad}{\forall \phi_i \in \calS_n}
+\end{maxi*}
+
+Let $\calT_n$ be the collection of the states in $\calS_n$ with real coefficients.
+This means $\calT_n$ is the collection of the states with $\bm{c}=0$ and
+$\abs{\calT_n} = \abs{\calS_n}/(2^n)$.
+Now, we consider the following restricted optimization problem:
+\begin{mini*}
+    {x \in \mathbb{R}^\abs{\calT_n}}
+    {\norm{x}_1}
+    {}{}
+    \addConstraint{\sum_{\phi_j \in \calT_n}x_j\ket{\phi_j}}{= \ket{\psi}}{}
+\end{mini*}
+\begin{maxi*}
+    {\ket{y} \in \mathbb{R}^{2^n}}
+    {\braket{\psi}{y}}
+    {}{}
+    \addConstraint{\abs{\braket{\phi_j}{y}}}{\leq 1,\quad}{\forall \phi_j \in \calT_n}
+\end{maxi*}
+
+Let $x^*$ and $y^*$ be the optimal solutions of the restricted primal and dual problems, respectively.
+These vectors always exist since $\calT_n$ forms a over complete basis.
+We now show that the $x^*, y^*$ are
+optimal not only for the restricted problems but also for the original problems.
+
+\begin{lemma}{\label{lem:absRealForTIsAbsRealForS}}
+    Suppose $\ket{y}$ is real and satisfies $\abs{\braket{\phi_j}{y}} \leq 1$ for all $\phi_j \in \calT_n$.
+    Then, $\ket{y}$ satisfies $\abs{\braket{\phi_i}{y}} \leq 1$ for all $\phi_i \in \calS_n$.
+\end{lemma}
+\begin{proof}
+    We check the all states $\ket{\phi_i} \in \calS_n$ respectively.
+    It is trivial for the case $k=0$ since the corresponding columns both exist in $\calS_n$ and $\calT_n$.
+    We set $\ket{\phi_i} = \frac{1}{2^{k/2}}\sum_{x=0}^{2^k-1} (-1)^{x^\top Q x} i^{c^\top x} \ket{Rx+t}$ with $k>0$
+    and $\braket{\phi_i}{y} = \alpha + i\beta (\alpha, \beta \in \bbR)$.
+    The following two states
+    \begin{equation*}
+        \ket{\phi_+} \defeq \frac{1}{2^{k/2}}\sum_{x=0}^{2^k-1} (-1)^{x^\top Q x} \ket{Rx+t}, \quad
+        \ket{\phi_-} \defeq \frac{1}{2^{k/2}}\sum_{x=0}^{2^k-1} (-1)^{x^\top Q x + c^\top x} \ket{Rx+t}
+    \end{equation*}
+    are in $\calT_n$, and satisfy $\braket{\phi_+}{y} = \alpha+\beta, \braket{\phi_-}{y} = \alpha-\beta$.
+    From the assumption, we have
+    \begin{equation*}
+        \abs{\braket{\phi_i}{y}}
+        =\sqrt{\alpha^2 + \beta^2}
+        \leq \abs{\alpha}+\abs{\beta}
+        = \max\{\abs{\alpha+\beta}, \abs{\alpha-\beta}\}
+        \leq 1,
+    \end{equation*}
+    which completes the proof.
+\end{proof}
+
+\begin{theorem}
+    The optimal solutions for the restricted problems $x^*$ and $y^*$ are also optimal for the original problems.
+\end{theorem}
+\begin{proof}
+    Let $\mathrm{OPT}$ be the optimal value for the original primal problem.
+    Since $x^*$ can be a feasible solution for the original primal problem, it is clear that $\mathrm{OPT} \leq \norm{x^*}_1$.
+    By the strong duality theorem, $\mathrm{OPT}$ is also the optimal value for the original dual problem.
+    From the lemma \ref{lem:absRealForTIsAbsRealForS},
+    we can see that $y^*$ is a feasible solution for the original dual problem and $\mathrm{OPT} \geq \braket{\psi}{y^*}$.
+    Again, by applying the strong duality theorem to the restricted problems,
+    we have $\norm{x^*}_1 = \braket{\psi}{y^*}$, which means that $\mathrm{OPT} = \norm{x^*}_1 = \braket{\psi}{y^*}$.
+    Therefore, $x^*$ and $y^*$ are also optimal for the original problems.
+\end{proof}
+
+\end{document}

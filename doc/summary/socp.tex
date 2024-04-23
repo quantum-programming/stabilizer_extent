@@ -1,0 +1,220 @@
+\providecommand{\main}{.}
+\documentclass[\main/main]{subfiles}
+\setboolean{isMain}{false}
+
+\begin{document}
+
+\section{Derivation of the Dual Problem by CVXPY formulation}
+
+In the \href{https://cvxopt.org/userguide/coneprog.html#cvxopt.solvers.socp}{cvxpy official userguide},
+the following problem is considered.
+We change the index from $k$ to $i$ for consistency with our notation.
+
+\begin{mini*}
+    {\bm{x}}
+    {\bm{c}^\top \bm{x}}
+    {}{}
+    \addConstraint{G_i \bm{x} + \bm{s}_i}{= \bm{h}_i,\quad}{i = 0, \dots, M}
+    \addConstraint{A\bm{x}}{= \bm{b}}{}
+    \addConstraint{\bm{s}_0}{\succeq \bm{0}}{}
+    \addConstraint{s_{i0}}{\geq \norm{\bm{s}_{i1}}_2,\quad}{i = 1, \dots, M}
+\end{mini*}
+
+\begin{maxi*}
+    {\bm{y}}
+    {-\sum_{i=0}^{M} \bm{h}_i^\top \bm{z}_i - \bm{b}^\top \bm{y}}
+    {}{}
+    \addConstraint{\sum_{i=0}^{M} G_i^\top \bm{z}_i + A^\top \bm{y} + \bm{c}}{= \bm{0}}{}
+    \addConstraint{\bm{z}_0}{\succeq \bm{0}}{}
+    \addConstraint{\bm{z}_{i0}}{\geq \norm{\bm{z}_{i1}}_2,\quad}{i = 1, \dots, M}
+\end{maxi*}
+
+where $\succeq$ denotes element-wise inequality, and
+\begin{align*}
+    \bm{s}_i & =(s_{i0}, \bm{s}_{i1}) \in \mathbb{R} \times \mathbb{R}^{r_i-1}, \\
+    \bm{z}_i & =(z_{i0}, \bm{z}_{i1}) \in \mathbb{R} \times \mathbb{R}^{r_i-1}.
+\end{align*}
+
+We adapt this problem to our problem, minimizing the complex $L^1$ norm.
+\begin{mini*}
+    {\bm{x}\in \mathbb{C}^\abs{\calS_n}}
+    {\norm{\bm{x}}_1}
+    {}{}
+    \addConstraint{A\bm{x}}{= \bm{b}}{}
+\end{mini*}
+
+Let $e_i$ be a vector with the $i$-th component 1 and the others 0.
+Then, the problem can be written as follows.
+
+\begin{mini*}
+    {\bm{t}\in \mathbb{R}^\abs{\calS_n}, \bm{x}\in \mathbb{C}^\abs{\calS_n}}
+    {\mqty[\bm{1}^\top & \bm{0}^\top & \bm{0}^\top] \mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})]}
+    {}{}
+    \addConstraint{-\mqty[
+            e_i^\top&\bm{0}^\top&\bm{0}^\top\\
+            \bm{0}^\top&e_i^\top&\bm{0}^\top\\
+            \bm{0}^\top&\bm{0}^\top&e_i^\top\\
+        ] \mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})] + \bm{s}_i}{= \mqty(0\\0\\0),\quad}{i = 1, \dots, \abs{\calS_n}}
+    \addConstraint{\mqty[
+            0_{2^n \times \abs{\calS_n}} & \Re(A) && -\Im(A)\\
+            0_{2^n \times \abs{\calS_n}} & \Im(A) && \Re(A)
+        ]\mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})]}{= \mqty[\Re(\bm{b})\\ \Im(\bm{b})]}{}
+    \addConstraint{s_{i0}}{\geq \norm{\bm{s}_{i1}}_2,\quad}{i = 1, \dots, \abs{\calS_n}}
+\end{mini*}
+
+\begin{maxi*}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {-\mqty[\Re(\bm{b})^\top & \Im(\bm{b})^\top] \mqty[\Re(\bm{y})\\ \Im(\bm{y})] }
+    {}{}
+    \addConstraint{
+    -\sum_{i=1}^{M}{\mqty[
+        e_i & \bm{0} & \bm{0}\\
+        \bm{0} & e_i & \bm{0}\\
+        \bm{0} & \bm{0} & e_i
+    ] \mqty[z_{i0}\\\Re(z_{i1})\\\Im(z_{i1})]}+ \mqty[
+        0_{\abs{\calS_n} \times 2^n} & 0_{\abs{\calS_n} \times 2^n}\\
+        \Re(A)^\top & \Im(A)^\top\\
+        -\Im(A)^\top & \Re(A)^\top
+    ]\mqty[\Re(\bm{y})\\ \Im(\bm{y})] +\mqty[\bm{1}\\ \bm{0}\\ \bm{0}]
+    }{= \bm{0}}{}
+    \addConstraint{z_{i0}}{\geq \abs{z_{i1}},\quad}{i = 1, \dots, \abs{\calS_n}}
+\end{maxi*}
+
+Furthermore, let the $i$-th column of the matrix $A$ be $\bm{a}_i$.
+Then, the problem can be written as follows.
+\begin{maxi*}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {-\Re(\bm{b}^\dagger \bm{y})}
+    {}{}
+    \addConstraint{z_{i0}}{= 1,\quad}{i = 1, \dots, \abs{\calS_n}}
+    \addConstraint{z_{i1}}{= \bm{a}_i^\dagger \bm{y},\quad}{i = 1, \dots, \abs{\calS_n}}
+    \addConstraint{z_{i0}}{\geq \abs{z_{i1}},\quad}{i = 1, \dots, \abs{\calS_n}}
+\end{maxi*}
+
+\begin{maxi*}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {-\Re(\bm{b}^\dagger \bm{y})}
+    {}{}
+    \addConstraint{\abs{\bm{a}_i^\dagger \bm{y}}}{\leq 1,\quad}{i = 1, \dots, \abs{\calS_n}}
+\end{maxi*}
+
+Even if we flip the sign of the objective function, the optimal solution does not change
+thanks to the absolute value in the constraints.
+Thus, the dual problem of the original problem is
+\begin{maxi}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {\Re(\bm{b}^\dagger \bm{y})}
+    {\label{prob:CVXPYdual}}
+    {}
+    \addConstraint{\abs{\bm{a}_i^\dagger \bm{y}}}{\leq 1,\quad}{i = 1, \dots, \abs{\calS_n}}.
+\end{maxi}
+
+\section{Formulation by Mosek}
+
+In the \href{https://docs.mosek.com/latest/pythonapi/tutorial-cqo-shared.html}{mosek official tutorial},
+the following problem is considered with $\calD$ is a cone.
+\begin{mini*}
+    {\bm{x}}
+    {\bm{c}^\top \bm{x}+\bm{c}^f}
+    {}{}
+    \addConstraint{l^c\leq A\bm{x}}{\leq u^c}{}
+    \addConstraint{l^x\leq \phantom{A}\bm{x}}{\leq u^x}{}
+    \addConstraint{F\bm{x}+g}{\in \calD}
+\end{mini*}
+
+For our problem, the problem can be written as follows.
+\begin{mini*}
+    {\bm{t}\in \mathbb{R}^\abs{\calS_n}, \bm{x}\in \mathbb{C}^\abs{\calS_n}}
+    {\mqty[\bm{1}^\top & \bm{0}^\top & \bm{0}^\top] \mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})] + 0}
+    {}{}
+    \addConstraint{
+        \mqty[\Re(\bm{b})\\ \Im(\bm{b})]
+        \leq
+        \mqty[
+            0_{2^n \times \abs{\calS_n}} & \Re(A) && -\Im(A)\\
+            0_{2^n \times \abs{\calS_n}} & \Im(A) && \Re(A)
+        ]\mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})]}{
+        \leq
+        \mqty[\Re(\bm{b})\\ \Im(\bm{b})]
+    }
+    \addConstraint{-\infty \leq \mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})]}{\leq \infty}
+    \addConstraint{\mqty[I_{3\abs{\calS_n}}] \mqty[\bm{t}\\ \Re(\bm{x})\\ \Im(\bm{x})] + \bm{0}}{\in \qty(\calQ^3)^{\abs{\calS_n}} \quad (\text{with reordering})}
+\end{mini*}
+
+\section{Derivation of the Dual Problem by Lagrangian}
+
+We can derive the dual problem more directly using the Lagrangian.
+The original problem was formulated as follows.
+\begin{mini}
+    {\bm{x}\in \mathbb{C}^\abs{\calS_n}, \bm{t}\in \mathbb{R}^\abs{\calS_n}}
+    {\sum_{i=1}^{\abs{\calS_n}} t_i}
+    {\label{prob:primalForLagrangian}}
+    {}
+    \addConstraint{\mqty[
+            \Re(A) & -\Im(A)\\
+            \Im(A) & \Re(A)
+        ]\mqty[
+            \Re(\bm{x})\\
+            \Im(\bm{x})
+        ]}{= \mqty[
+            \Re(\bm{b})\\
+            \Im(\bm{b})
+        ]}
+    \addConstraint{\abs{x_i}}{\leq t_i,\quad}{i = 1, \dots, \abs{\calS_n}}
+\end{mini}
+The Lagrangian of the problem \eqref{prob:primalForLagrangian} can be defined by
+\begin{align*}
+    L(\bm{x}, \bm{t}, \bm{y},\bm{s})
+    = & \sum_{i=1}^{\abs{\calS_n}} t_i                                                           \\
+      & + \Re(\bm{y}^\top) (\Re(A) \Re(\bm{x}) - \Im(A) \Im(\bm{x}) - \Re(\bm{b}))               \\
+      & + \Im(\bm{y}^\top) (\Im(A) \Re(\bm{x}) + \Re(A) \Im(\bm{x}) - \Im(\bm{b}))               \\
+      & + \sum_{i=1}^{\abs{\calS_n}} s_i \qty(\abs{x_i} - t_i)                                   \\
+    = & -\Re(\bm{y}^\dagger \bm{b})                                                              \\
+      & + \sum_{i=1}^{\abs{\calS_n}} (1-s_i) t_i + \sum_{i=1}^{\abs{\calS_n}} \qty(s_i \abs{x_i}
+    +\mqty[\Re(\bm{a}_i^\dagger \bm{y})                                                          \\
+        \Im(\bm{a}_i^\dagger \bm{y})]^\top
+    \mqty[\Re(\bm{x})                                                                            \\
+        \Im(\bm{x})]).
+\end{align*}
+By using \href{https://math.stackexchange.com/questions/2738165/dual-of-a-second-order-cone-program-socp}{this relation},
+we can obtain the Lagrange dual function as follows.
+\begin{align*}
+    g(\bm{y}, \bm{s})
+    = & \inf_{\bm{x}, \bm{t}} L(\bm{x}, \bm{t}, \bm{y},\bm{s})                                       \\
+    = & -\Re(\bm{b}^\dagger \bm{y})                                                                  \\
+      & +\begin{cases}
+             0       & \text{if } s_i \neq 1 \\
+             -\infty & \text{otherwise}
+         \end{cases}                                                             \\
+      & +\begin{cases}
+             0       & \text{if } \abs{\bm{a}_i^\dagger \bm{y}} \leq 1 \\
+             -\infty & \text{otherwise}
+         \end{cases}
+\end{align*}
+% 不等式制約に対するLagrange変数であることから要請される
+% $s_i \geq 0$という制約は、$s_i = 1$より満たされることに注意する（厳密な言い回しか自信なし）。
+Thus, the dual problem of the original problem is
+\begin{maxi*}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {-\Re(\bm{b}^\dagger \bm{y})}
+    {}{}
+    \addConstraint{\abs{\bm{a}_i^\dagger \bm{y}}}{\leq 1,\quad}{i = 1, \dots, \abs{\calS_n}},
+\end{maxi*}
+and even if we flip the sign of the objective function, the optimal solution does not change
+thanks to the absolute value in the constraints.
+Thus, the dual problem of the original problem is
+\begin{maxi}
+    {\bm{y}\in \mathbb{C}^{2^n}}
+    {\Re(\bm{b}^\dagger \bm{y})}
+    {\label{prob:dual}}
+    {}
+    \addConstraint{\abs{\bm{a}_i^\dagger \bm{y}}}{\leq 1,\quad}{i = 1, \dots, \abs{\calS_n}},
+\end{maxi}
+which is consistent with the dual problem \eqref{prob:CVXPYdual}.
+
+\ifthenelse{\boolean{isMain}}{}{
+    \bibliographystyle{quantum}
+    \bibliography{stabilizerExtent}
+}
+
+\end{document}

@@ -1,0 +1,161 @@
+\documentclass[a4paper]{jlreq}
+% \documentclass[a4paper, onecolumn, 11pt, longbibliography]{quantumarticle}
+% \pdfoutput=1
+
+% \usepackage[utf8]{inputenc}
+% \usepackage[english]{babel}
+% \usepackage[T1]{fontenc}
+
+\usepackage{silence}
+\WarningFilter{caption}{Unknown document class}
+
+\usepackage[linesnumbered, ruled, vlined]{algorithm2e}
+\usepackage{amsmath, amssymb, amsthm, mathrsfs, amsfonts, dsfont}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{braket}
+\usepackage{calc}
+\usepackage[style=base]{caption}
+% \usepackage{csvsimple}
+\usepackage{enumerate}
+\usepackage{enumitem}
+% \usepackage{epsfig}
+\usepackage{hyperref}
+\usepackage{ifthen}
+% \usepackage{listings}
+\usepackage{lipsum}
+\usepackage{makecell}
+\usepackage{mathtools}
+\usepackage{multirow}
+\usepackage{nicematrix}
+\usepackage{optidef}
+\usepackage{physics}
+% \usepackage{qcircuit}
+% \usepackage{siunitx}
+% \usepackage{stfloats}
+\usepackage{subfiles}
+\usepackage{subcaption}
+\usepackage{thm-restate}
+\usepackage{tikz}
+% \usepackage[hyphens]{url}
+\usepackage{xparse}
+% \usepackage[all]{xy}
+\usepackage{xparse}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+% === Commands ===
+
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\cyan}[1]{\textcolor{cyan}{#1}}
+\newcommand{\gray}[1]{\textcolor{gray}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\brown}[1]{\textcolor{brown}{#1}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+\newcommand{\orange}[1]{\textcolor{orange}{#1}}
+\newcommand{\purple}[1]{\textcolor{purple}{#1}}
+\newcommand{\yellow}[1]{\textcolor{yellow}{#1}}
+\newcommand{\Magenta}[1]{\textcolor{Magenta}{#1}}
+\newcommand{\RoyalBlue}[1]{\textcolor{RoyalBlue}{#1}}
+\newcommand{\RubineRed}[1]{\textcolor{RubineRed}{#1}}
+\newcommand{\ForestGreen}[1]{\textcolor{ForestGreen}{#1}}
+\newcommand{\YellowOrange}[1]{\textcolor{YellowOrange}{#1}}
+\newcommand{\WildStrawberry}[1]{\textcolor{WildStrawberry}{#1}}
+\newcommand{\st}{\text{ s.t. }}
+\newcommand{\Img}[1]{\mathrm{Im}\qty(#1)}
+\newcommand{\Ker}[1]{\mathrm{Ker}\qty(#1)}
+\newcommand{\Supp}[1]{\mathrm{supp}\qty(#1)}
+\newcommand{\Rank}[1]{\mathrm{rank}\qty(#1)}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+% C++ (https://tex.stackexchange.com/questions/4302/prettiest-way-to-typeset-c-cplusplus)
+\newcommand{\Cpp}{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\relsize{-3}{\textbf{++}}}}
+% https://tex.stackexchange.com/questions/28836/typesetting-the-define-equals-symbol
+\newcommand{\defeq}{\coloneqq}
+\newcommand{\eqdef}{\eqqcolon}
+% q binomial coefficient
+\newcommand{\qBinom}[2]{\genfrac{[}{]}{0pt}{}{#1}{#2}}
+
+% https://tex.stackexchange.com/questions/564216/newcommand-for-each-letter
+\ExplSyntaxOn
+\NewDocumentCommand{\definealphabet}{mmmm}{
+\int_step_inline:nnn{`#3}{`#4}{
+\cs_new_protected:cpx{#1 \char_generate:nn{##1}{11}}{
+\exp_not:N #2{\char_generate:nn{##1}{11}}}}}
+\ExplSyntaxOff
+
+\definealphabet{bb}{\mathbb}{A}{Z}
+\definealphabet{rm}{\mathrm}{A}{Z}
+\definealphabet{cal}{\mathcal}{A}{Z}
+% \definealphabet{scr}{\mathscr}{A}{Z}
+\definealphabet{frak}{\mathfrak}{a}{z}
+% \definealphabet{frak}{\mathfrak}{A}{Z}
+
+% === Settings ===
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+% https://qiita.com/rityo_masu/items/efd44bc8f9229e014237
+\allowdisplaybreaks[4]
+
+\usetikzlibrary{
+  calc,
+  math,
+  matrix,
+  patterns,
+  backgrounds,
+  arrows.meta,
+}
+
+\DontPrintSemicolon
+
+% \graphicspath{{./fig/}}
+
+\providecommand{\main}{.}
+\newboolean{isMain}
+\setboolean{isMain}{true}
+
+% --------------------  TITLE  --------------------
+
+\begin{document}
+
+\title{Stabilizer Extent}
+\author{Hiroki Hamaguchi}
+\date{\today}
+\maketitle
+
+% --------------------  ABSTRACT  --------------------
+
+\begin{abstract}
+  This is just a memo for meeting.
+  In order to practice,
+  I wrote this memo in English.
+\end{abstract}
+\maketitle
+
+\subfile{socp.tex}
+
+\subfile{stabilizerState.tex}
+
+\subfile{realPsi.tex}
+
+\emph{Acknowledgements.---}
+
+acknowledgements acknowledgements acknowledgements
+
+\bibliographystyle{quantum}
+\bibliography{stabilizerExtent}
+
+%\onecolumn
+\appendix
+
+% \section{Appendix1} \label{app:appendix1}
+
+\end{document}
