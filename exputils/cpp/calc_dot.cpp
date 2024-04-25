@@ -40,7 +40,7 @@ struct dotCalculator {
   vec<std::pair<double, INT>> values;
   INT branch_cut = 0;
   double threshold = 0.0;
-  static constexpr size_t MAX_VALUES_SIZE = 500;
+  static constexpr size_t MAX_VALUES_SIZE = 5000;
   static constexpr int LARGE_K = 7;
 
   vc arange_psi_by_t(int k, int t, const vi& row_idxs, const vc& psi_normalized) {
@@ -49,11 +49,15 @@ struct dotCalculator {
     return psi2;
   }
 
+  template <bool is_final = false>
   void truncate_values() {
-    std::nth_element(values.begin(), values.begin() + MAX_VALUES_SIZE, values.end(),
+    size_t SZ = MAX_VALUES_SIZE;
+    if constexpr (is_final)
+      if (values.size() < SZ) return;
+    std::nth_element(values.begin(), values.begin() + SZ, values.end(),
                      [](const auto& a, const auto& b) { return a.first > b.first; });
-    threshold = values[MAX_VALUES_SIZE].first;
-    values.resize(MAX_VALUES_SIZE);
+    threshold = values[SZ].first;
+    values.resize(SZ);
   }
 
   void add_to_values(vec<std::pair<double, INT>>& values_local) {
@@ -228,7 +232,7 @@ struct dotCalculator {
 
   void calc_dot_main(int n, const vc& psi, const bool is_dual_mode) {
     assert(int(psi.size()) == (1 << n));
-    if (is_dual_mode) threshold = 1.0;
+    if (is_dual_mode) threshold = 1.00;
     for (int i = 0; i < (1 << n); i++)
       if (std::abs(psi[i]) > threshold) values.emplace_back(std::abs(psi[i]), i);
     std::sort(ALL(values),
@@ -292,11 +296,12 @@ struct dotCalculator {
         max = (*max_element(ALL(values))).first;
       }
       std::cerr << "[k|progress|range]: " << std::setw(std::to_string(n).size()) << k
-                << " | " << std::setw(std::to_string(t_s_g_s).size()) << ret_idx << "/"
-                << t_s_g_s << " | [" << std::fixed << std::setprecision(5) << min
-                << ", " << max << "] | " << timer1.report() << std::endl;
+                << " | " << std::scientific << std::setprecision(5) << double(ret_idx)
+                << "/" << double(t_s_g_s) << " | [" << std::fixed
+                << std::setprecision(5) << min << ", " << max << "] | "
+                << timer1.report() << std::endl;
     }
-    truncate_values();
+    truncate_values<true>();
     return;
   }
 };
@@ -316,7 +321,7 @@ int main() {
     for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
   } catch (const std::exception& e) {
-    n = 6;
+    n = 3;
     psi.resize(1 << n);
     std::mt19937 mt(1);
     for (int i = 0; i < 1 << n; i++)
