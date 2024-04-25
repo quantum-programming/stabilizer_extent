@@ -20,3 +20,5 @@
 *.dvi
 *.synctex.gz
 *.synctex(busy)
+
+hidden/*
