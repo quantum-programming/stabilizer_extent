@@ -1,6 +1,11 @@
 #include "include/include.hpp"
 #include "rref.cpp"
 
+// Please note that all stabilizer states can be represented by the form of
+// |phi> = \sum_{x=0}^{2^k-1} -1^{x^T Q x} i^{c^T x} |Rx+t>.
+
+// kkk12 represents the number of stabilizer states for each k with fixed R and t,
+// which means the number of combinations of Q and c.
 constexpr INT calc_kkk12(int k) { return INT(1) << (k + k * (k + 1) / 2); }
 
 INT kkk12s[11] = {calc_kkk12(0), calc_kkk12(1), calc_kkk12(2), calc_kkk12(3),
@@ -8,10 +13,14 @@ INT kkk12s[11] = {calc_kkk12(0), calc_kkk12(1), calc_kkk12(2), calc_kkk12(3),
                   calc_kkk12(8), calc_kkk12(9), calc_kkk12(10)};
 
 struct dotCalculator {
+  // compute top MAX_VALUES_SIZE values of |<psi|phi>|
+
   dotCalculator() {}
 
   auto calc_dot(int n, const vc& psi, bool is_dual_mode) {
     timer1.start();
+    // Let P_x := <psi|x>, then <psi|phi> = \sum_{x} (-1)^{x^T Q x} i^{c^T x} P_{Rx+t}
+    // Thus, we use conjugate of psi[x] = <x|psi> for the calculation.
     vc psi_conj = psi;
     for (auto& x : psi_conj) x = std::conj(x);
     calc_dot_main(n, psi_conj, is_dual_mode);
@@ -22,16 +31,10 @@ struct dotCalculator {
 
     sort(values.rbegin(), values.rend());
     int result_sz = std::min(values.size(), MAX_VALUES_SIZE);
-    // *** idx ***
     vec<INT> result;
     result.reserve(result_sz);
     for (int i = 0; i < result_sz; i++) result.push_back(values[i].second);
     return result;
-    // *** value ***
-    // vec<double> result;
-    // result.reserve(result_sz);
-    // for (int i = 0; i < result_sz; i++) result.push_back(values[i].first);
-    // return result;
   }
 
  private:
@@ -70,6 +73,7 @@ struct dotCalculator {
   }
 
   COMPLEX rotate_complex(const COMPLEX x) {
+    // only for 'check_branch_cut'
     if (x.imag() >= 0)
       return (x.real() >= 0) ? +x : x * COMPLEX(0, -1);
     else
@@ -77,21 +81,32 @@ struct dotCalculator {
   }
 
   bool check_branch_cut(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
+    // check if the branch cut is possible for k-th psi ([psi_begin, psi_begin+(1<<k)))
+    // Let MAX := max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} P_x| where P_x = <x|psi>
+
+    // 1. The first condition:
+    // MAX <= sum_{x} |(-1)^{x^T Q x} i^{c^T x} P_x| = sum_{x} |P_x|
     double absSum =
         std::accumulate(psi_begin, psi_begin + (1 << k), 0.0,
                         [](double a, COMPLEX b) { return a + std::abs(b); });
     if (absSum >= threshold) return false;
     if (absSum < 1.2 * threshold) {
+      // 2. The second condition:
+      // MAX <= sum_{x} |i^{c_x} P_x| where c_x \in {0,1,2,3}
+      // we can compute this threshold by sorting the complex numbers by their argument
       vc Ys(1 << k);
       double sum_ys_real = 0.0, sum_ys_imag = 0.0;
+      // rotate complex numbers to the first quadrant
       for (size_t i = 0; i < Ys.size(); i++) {
         Ys[i] = rotate_complex(*(psi_begin + i));
         sum_ys_real += Ys[i].real();
         sum_ys_imag += Ys[i].imag();
       }
+      // sort by argument
       std::sort(ALL(Ys), [](const auto a, const auto b) {
         return a.imag() * b.real() < a.real() * b.imag();
       });
+      // by iterating the sorted complex numbers, we can compute the threshold
       double max_abs2 = sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag;
       for (size_t i = 0; i < Ys.size(); ++i) {
         sum_ys_real += -Ys[i].real() - Ys[i].imag();
@@ -141,18 +156,28 @@ struct dotCalculator {
     // psi_list[(1<<k)+i] = psi_list[(1<<k)^i] = k-th psi[i] (0<=i<(1<<k))
     vc psi_list(1 << (k_orig + 1), 0);
     for (int i = 0; i < (1 << k_orig); i++) psi_list[(1 << k_orig) ^ i] = psi_orig[i];
+
+    // we use non-recursive dfs. The each step of dfs is divided into two parts:
+    // 1. set the value of c[k] and Q[k,k] (stk1)
+    // 2. set the value of Q[k,i] (k<=i)   (stk2)
     vec<INT> stk1;
     vec<std::tuple<int, int, INT, bool, bool>> stk2;
+
+    // in order to reduce critical section, we save values to local variable temporarily
     vec<std::pair<double, INT>> values_local;
-    vi ks;  // +:stk1 -:stk2
+    // +:stk1 -:stk2
+    vi ks;
+
     stk1.emplace_back(ret_idx_orig);
     ks.push_back(k_orig);
     while (!ks.empty()) {
       int k = ks.back();
       ks.pop_back();
       if (k > 0) {
+        // 1. set the value of c[k] and Q[k,k]
         INT ret_idx = stk1.back();
         stk1.pop_back();
+        // In order to speed up, compute the dot product directly for k=1,2
         if (k == 1) {
           for (int i = 0; i < kkk12s[1]; i++) {
             double val = std::abs(Amats.Amat1[i][0] * psi_list[2 + 0] +
@@ -181,6 +206,7 @@ struct dotCalculator {
             }
         }
       } else {
+        // 2. set the value of Q[k,i] (k<=i)
         k = -k;
         auto [q_0, i, ret_idx_local, c_0, q_00] = stk2.back();
         stk2.pop_back();
@@ -213,6 +239,8 @@ struct dotCalculator {
   }
 
   void calc_dot_sub_large_k(const int k, const vc& psi, INT ret_idx) {
+    // If k is large, the size of rref (which means R and t) becomes too small to
+    // parallelize. Thus, we parallelize by the first step of the non-recursive dfs.
     assert(LARGE_K <= k && int(psi.size()) == (1 << k));
     if (check_branch_cut(k, psi.begin())) return;
     vec<std::tuple<int, vc, INT>> stk1;
@@ -233,12 +261,24 @@ struct dotCalculator {
   void calc_dot_main(int n, const vc& psi, const bool is_dual_mode) {
     assert(int(psi.size()) == (1 << n));
     if (is_dual_mode) threshold = 1.00;
+
+    // For the case k=0
     for (int i = 0; i < (1 << n); i++)
       if (std::abs(psi[i]) > threshold) values.emplace_back(std::abs(psi[i]), i);
     std::sort(ALL(values),
               [](const auto& a, const auto& b) { return a.first > b.first; });
+
+    // Total number of stabilizer states
     INT t_s_g_s = total_stabilizer_group_size(n);
+
     for (int k = 1; k <= n; k++) {
+      // rref means the reduced row echelon form of the matrix R.
+      // R = [row_idxs[0]//row_idxs[1]//...//row_idxs[k-1]].
+
+      // t is a element from the complement of R.
+      // The complement of R can be expressed by basis vectors,
+      // where each basis vector has only one element of 1 and the others are 0.
+      // t_mask is a sum of the basis vectors.
       INT ret_idx = (1ll << n);
       for (int _k = 1; _k < k; _k++)
         ret_idx += q_binomial(n, _k) * (1ll << (n + _k * (_k + 1) / 2));
@@ -271,6 +311,8 @@ struct dotCalculator {
               }
             }
             ret_idx_local += kkk12s[k];
+            // Iterate the subset of t_mask. Refer to the following URL for details.
+            // https://stackoverflow.com/questions/7277554/what-is-a-good-way-to-iterate-a-number-through-all-the-possible-values-of-a-mask#comment9091440_7277818
             t = (t + ~t_mask + 1) & t_mask;
             if (t == 0) break;
           }
