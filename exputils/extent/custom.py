@@ -65,7 +65,7 @@ def _calculate_by_mosek(n: int, Amat: csc_matrix, psi: np.ndarray, verbose=False
     See documents in doc folder for more details.
     """
     assert Amat.shape[0] == psi.size == 2**n
-    assert Amat.shape[1] <= total_stabilizer_group_size(n)
+    assert 2**n <= Amat.shape[1] <= total_stabilizer_group_size(n)
     sz = Amat.shape[1]
 
     with mosek.Task() as task:
@@ -101,6 +101,7 @@ def _calculate_by_mosek(n: int, Amat: csc_matrix, psi: np.ndarray, verbose=False
             [2 * Amat.indptr[:-1], Amat.indptr[:-1] + Amat.indptr[1:]]
         ).T.flatten()
         ptre = np.append(ptrb[1:], 2 * Amat.indptr[-1])
+        assert np.all(sub >= 0) and np.all(ptrb >= 0) and np.all(ptre >= 0)
         asub = []
         aval = []
         for j, col in tqdm(enumerate(Amat.T), disable=not verbose, total=sz):
