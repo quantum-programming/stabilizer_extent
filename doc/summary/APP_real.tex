@@ -4,50 +4,39 @@
 
 \begin{document}
 
-\section{For the Case \texorpdfstring{$\ket{\psi}$}{psi} is Real}
+\ifthenelse{\boolean{isMain}}{}{
+    \begin{restatable}{theorem}{restrictedRealProblem}
+        \label{thm:restrictedRealProblem}
+        Suppose that the state $\ket{\psi}$ is real.
+        If we substitute the matrix $A_n$
+        with the matrix $A_n'$
+        in the problem~\eqref{eq:stabilizerExtentPrimal},
+        the optimal solution of the restricted problem
+        is also optimal for the original problem.
+    \end{restatable}
+}
 
-Assume that the state $\ket{\psi}$ is real.
-Now, we consider the following optimization problem:
-\begin{mini*}
-    {x \in \mathbb{C}^\abs{\calS_n}}
-    {\norm{x}_1}
-    {\label{prob:primal}}
-    {}
-    \addConstraint{\sum_{\phi_i \in \calS_n}x_i\ket{\phi_i}}{= \ket{\psi}}{}
-\end{mini*}
-\begin{maxi*}
-    {\ket{y} \in \mathbb{C}^{2^n}}
-    {\Re(\braket{\psi}{y})}
-    {\label{prob:dual}}
-    {}
-    \addConstraint{\abs{\braket{\phi_i}{y}}}{\leq 1,\quad}{\forall \phi_i \in \calS_n}
-\end{maxi*}
+\section{The proof of Theorem~\ref{thm:restrictedRealProblem}}
 
-Let $\calT_n$ be the collection of the states in $\calS_n$ with real coefficients.
-This means $\calT_n$ is the collection of the states with $\bm{c}=0$ and
-$\abs{\calT_n} = \abs{\calS_n}/(2^n)$.
-Now, we consider the following restricted optimization problem:
-\begin{mini*}
-    {x \in \mathbb{R}^\abs{\calT_n}}
-    {\norm{x}_1}
-    {}{}
-    \addConstraint{\sum_{\phi_j \in \calT_n}x_j\ket{\phi_j}}{= \ket{\psi}}{}
-\end{mini*}
-\begin{maxi*}
-    {\ket{y} \in \mathbb{R}^{2^n}}
-    {\braket{\psi}{y}}
-    {}{}
-    \addConstraint{\abs{\braket{\phi_j}{y}}}{\leq 1,\quad}{\forall \phi_j \in \calT_n}
-\end{maxi*}
-
-Let $x^*$ and $y^*$ be the optimal solutions of the restricted primal and dual problems, respectively.
-These vectors always exist since $\calT_n$ forms a over complete basis.
-We now show that the $x^*, y^*$ are
-optimal not only for the restricted problems but also for the original problems.
+In this section, we prove Theorem~\ref{thm:restrictedRealProblem}.
+As we have stated in section~\ref{sec:restrictedRealProblem},
+by substituting the matrix $A_n$ with the matrix $A_n'$,
+we consider the restricted problems of
+primal problem~\eqref{eq:stabilizerExtentPrimal}
+and dual problem~\eqref{eq:stabilizerExtentDual}.
+Let $x^*$ and $y^*$ be the optimal solutions of the restricted
+primal and dual problems, respectively.
+We can assure such solutions always exists.
+Now, we show that the $x^*, y^*$ are
+optimal not only for the restricted problems
+but also for the original problems.
 
 \begin{lemma}{\label{lem:absRealForTIsAbsRealForS}}
-    Suppose $\ket{y}$ is real and satisfies $\abs{\braket{\phi_j}{y}} \leq 1$ for all $\phi_j \in \calT_n$.
-    Then, $\ket{y}$ satisfies $\abs{\braket{\phi_i}{y}} \leq 1$ for all $\phi_i \in \calS_n$.
+    Suppose $y$ is a real vector and satisfies
+    $\abs{a^\dagger y} \leq 1$ for all $a \in \calA_n$
+    such that $a$ is a real vector.
+    Then, $y$ satisfies
+    $\abs{a^\dagger y} \leq 1$ for all $a \in \calA_n$.
 \end{lemma}
 \begin{proof}
     We check the all states $\ket{\phi_i} \in \calS_n$ respectively.

@@ -1,10 +1,5 @@
-\documentclass[a4paper]{jlreq}
-% \documentclass[a4paper, onecolumn, 11pt, longbibliography]{quantumarticle}
-% \pdfoutput=1
-
-% \usepackage[utf8]{inputenc}
-% \usepackage[english]{babel}
-% \usepackage[T1]{fontenc}
+\documentclass[a4paper, onecolumn, 11pt, longbibliography]{quantumarticle}
+\pdfoutput=1
 
 \usepackage{silence}
 \WarningFilter{caption}{Unknown document class}
@@ -22,6 +17,8 @@
 \usepackage{enumitem}
 % \usepackage{epsfig}
 \usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage[dvipdfmx]{graphicx}
 \usepackage{ifthen}
 % \usepackage{listings}
 \usepackage{lipsum}
@@ -63,9 +60,6 @@
 \newcommand{\YellowOrange}[1]{\textcolor{YellowOrange}{#1}}
 \newcommand{\WildStrawberry}[1]{\textcolor{WildStrawberry}{#1}}
 \newcommand{\st}{\text{ s.t. }}
-\newcommand{\Img}[1]{\mathrm{Im}\qty(#1)}
-\newcommand{\Ker}[1]{\mathrm{Ker}\qty(#1)}
-\newcommand{\Supp}[1]{\mathrm{supp}\qty(#1)}
 \newcommand{\Rank}[1]{\mathrm{rank}\qty(#1)}
 \newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
 \newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
@@ -114,6 +108,11 @@
   arrows.meta,
 }
 
+% This declares a command \Comment
+% The argument will be surrounded by /* ... */
+% https://ja.overleaf.com/learn/latex/Algorithms
+\SetKwComment{Comment}{/* }{ */}
+
 \DontPrintSemicolon
 
 % \graphicspath{{./fig/}}
@@ -125,26 +124,171 @@
 % --------------------  TITLE  --------------------
 
 \begin{document}
-
 \title{Stabilizer Extent}
+
+% ------------  AUTHORS AND AFFILIATIONS ----------
 \author{Hiroki Hamaguchi}
-\date{\today}
-\maketitle
+\email{hamaguchi-hiroki0510@g.ecc.u-tokyo.ac.jp}
+\affiliation{Graduate School of Information Science and Technology, University of Tokyo, Tokyo, Japan}
+
+\author{Kou Hamada}
+\email{zkouaaa@g.ecc.u-tokyo.ac.jp}
+\affiliation{Graduate School of Information Science and Technology, University of Tokyo, Tokyo, Japan}
+
+\author{Nobuyuki Yoshioka}
+\email{nyoshioka@ap.t.u-tokyo.ac.jp}
+\affiliation{Department of Applied Physics, University of Tokyo, Japan}
+\affiliation{\orange{Theoretical Quantum Physics Laboratory, RIKEN Cluster for Pioneering Research (CPR), Wako-shi, Saitama 351-0198, Japan}}
+\affiliation{\orange{JST, PRESTO, 4-1-8 Honcho, Kawaguchi, Saitama, 332-0012, Japan}}
 
 % --------------------  ABSTRACT  --------------------
 
 \begin{abstract}
-  This is just a memo for meeting.
-  In order to practice,
-  I wrote this memo in English.
+    \orange{todo}
 \end{abstract}
 \maketitle
 
-\subfile{socp.tex}
+\section{Introduction}
 
-\subfile{stabilizerState.tex}
+\orange{todo}
 
-\subfile{realPsi.tex}
+\section{Preliminaries}
+
+We denote the entire set of $n$-qubit
+stabilizer states as $\calS_n \defeq \qty{\ket{\phi_\alpha}}$.
+The size of $\calS_n$
+scales superexponentially as
+$\abs{\calS_n} = 2^n \prod_{k=0}^{n-1} (2^{n-k} + 1)= 2^{\order{n^2}}$
+\cite[Proposition 1]{PhysRevA.70.052328}.
+Suppose $\psi$ is a normalized $n$-qubit state.
+The \textit{stabilizer extent} is
+introduced in~\cite[Definition 3]{Bravyi2019simulationofquantum}
+to quantify the state $\psi$,
+and is defined as follows:
+\begin{equation}\label{eq:stabilizerExtentPrimalOrig}
+    \xi(\psi) \defeq \min_{c\in \bbC^{\abs{\calS_n}}} \left\{ \norm{c}_1^2 \;\middle|\; \psi = \sum_{\alpha=1}^{\abs{\calS_n}} c_\alpha \ket{\phi_\alpha} \right\}.
+\end{equation}
+This definition can be simplified as
+complex $L^1$-norm minimization problem:
+\begin{equation}\label{eq:stabilizerExtentPrimal}
+    \sqrt{\xi(\psi)} = \min_{x \in \bbC^{\abs{\calS_n}}} \left\{ \sum_{\alpha=1}^{\abs{\calS_n}} x_\alpha \;\middle|\; A_n x = b \right\},
+\end{equation}
+Here, we define $A_n \in \bbC^{2^n \times \abs{\calS_n}}$ as
+$(A_n)_{ij} \defeq \braket{i}{\phi_j}$
+and $b \in \bbC^{\abs{\calS_n}}$ as
+$b_i \defeq \braket{i}{\psi}$
+using the computational basis $\qty{\ket{i}}_{i=0}^{2^n-1}$.
+As in \cite{heimendahlStabilizerExtentNot2021},
+the problem \eqref{eq:stabilizerExtentPrimal}
+is a second order cone program (SOCP).
+Thus, its dual problem can be derived
+as~\cite[Appendix A]{heimendahlStabilizerExtentNot2021}\cite[Section 5.1.6]{boydConvexOptimization2004}
+\begin{equation}\label{eq:stabilizerExtentDual}
+    \sqrt{\xi(\psi)} = \max_{y \in \bbC^{2^n}} \left\{ \Re(b^\dagger y) \;\middle|\; \abs{a_j^\dagger y} \leq 1 \text{ for all } j \right\},
+\end{equation}
+where $a_j \in \bbC^{2^n}$ is the $j$-th column of $A_n$
+and $\dagger$ denotes the conjugate transpose.
+Although the actual objective function in~\eqref{eq:stabilizerExtentDual}
+should be multiplied by $-1$,
+we flipped the sign for simplicity, which does not affect the solution.
+
+\section{Scaling up The Exact Stabilizer Extent Calculation}
+
+Although SOCP are solvable in polynomial time with
+respect to the matrix size,
+due to the superexponential growth of
+the matrix size $\abs{\calS_n}$,
+using the entire $A_n$ is totally impractical
+for $n>5$~\cite{}.
+In order to tackle this kind of problem,
+we have proposed to utilize the
+column generation (CG) method
+in~\cite{hamaguchiHandbookEfficientlyQuantifying2023}.
+The CG method is a well-known technique
+to solve large-scale optimization problems.
+Here, we show that similar method actually works
+for the stabilizer extent calculation too.
+
+\subsection{CG method}
+
+\begin{algorithm}[tb]
+    \KwIn{vector $b$ corresponding to the state $\psi$}
+    \KwOut{Exact stabilizer extent $\xi(\psi)$}
+    \SetKwFunction{SolveSOCP}{SolveSOCP}
+    $\calC \gets \text{Partial set of $\calA_n$}$
+    \Comment*[r]{Initialize using top overlaps}
+    \While{true}{
+        $R, \bm{y} \gets \SolveSOCP(\calC, \bm{b})$\\
+        $\calC' \gets \qty{\bm{a} \in \calA_n \mathrel{}\middle|\mathrel{} \abs{\bm{a}^\dagger \bm{y}} > 1}$
+        \Comment*[r]{Use of subroutine in Section~\ref{sec:coreSubroutine}}
+        \If {$\calC' = \emptyset$} {
+            \textbf{break}
+        }
+        $\calC \gets \calC \cup \calC'$\\
+    }
+    $\Return$ $R$
+    \caption{Exact stabilizer extent calculation by Column Generation}
+    \label{alg:CG}
+\end{algorithm}
+
+\subsection{Core Subroutine: Calculating Overlap}
+\label{sec:coreSubroutine}
+
+As a well-known fact,
+the stabilizer states have a simple form as shown in the following proposition.
+\begin{proposition}[{
+                \cite[Theorem 2]{struchalinExperimentalEstimationQuantum2021b},
+                \cite[Section 5]{nestClassicalSimulationQuantum2010},
+                \cite[Theorem 5.(ii)]{dehaeneCliffordGroupStabilizer2003}
+            }]\label{prop:originalStabilizerStateStandardForm}
+    All stabilizer states can be written in the following form:
+    \begin{equation}\label{eq:stabilizerStateStandardForm}
+        \begin{dcases}
+            \ket{\phi} \defeq \ket{t}                                                                       & \text{if $k=0$} \\
+            \ket{\phi} \defeq \frac{1}{2^{k/2}} \sum_{x=0}^{2^k-1}(-1)^{x^\top Q x} i^{c^\top x}\ket{R x+t} & \text{if $k>0$}
+        \end{dcases}
+    \end{equation}
+    where $Q \in \bbF_2^{k \times k}$, $c \in \bbF_2^k$, $R \in \bbF_2^{k \times (n-k)}$, $t \in \bbF_2^{n-k}$
+    and $\Rank{R} = k$.
+    Also, any state that can be written in this form is a stabilizer state.
+\end{proposition}
+
+\begin{theorem}{Complexity of computing all stabilizer overlaps}
+    \label{thm:complexityStabilizerOverlap}
+    Computation of $A_n^\dagger y$
+    can be done in time complexity of
+    $\order{n\abs{S_n}}$ and
+    space complexity of $\order{2^n}$.
+\end{theorem}
+
+\subsection{For the case $\ket{\psi}$ is Real}
+\label{sec:restrictedRealProblem}
+
+In some cases, the state $\ket{\psi}$ could be real.
+For example, ... .
+In these cases, we can further simplify the problem.
+We define the subset of the states in $\calS_n$ with real coefficients as $\calT_n$,
+and the corresponding matrix $A_n$ as $A_n'$.
+Then, the next theorem holds.
+\begin{restatable}{theorem}{restrictedRealProblem}
+    \label{thm:restrictedRealProblem}
+    Suppose that the state $\ket{\psi}$ is real.
+    If we substitute the matrix $A_n$
+    with the matrix $A_n'$
+    in the problem~\eqref{eq:stabilizerExtentPrimal},
+    the optimal solution of the restricted problem
+    is also optimal for the original problem.
+\end{restatable}
+
+Thanks to this theorem,
+we can reduce the size of the matrix $A_n$
+by a factor of $2^n$.
+
+\section{Approx Solutions}
+
+\section{Discussion}
+
+There are room for improvement.
 
 \emph{Acknowledgements.---}
 
@@ -153,9 +297,10 @@ acknowledgements acknowledgements acknowledgements
 \bibliographystyle{quantum}
 \bibliography{stabilizerExtent}
 
-%\onecolumn
 \appendix
 
-% \section{Appendix1} \label{app:appendix1}
+\subfile{APP_impl.tex}
+
+\subfile{APP_real.tex}
 
 \end{document}

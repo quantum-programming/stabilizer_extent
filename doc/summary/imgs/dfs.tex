@@ -27,18 +27,23 @@
 \newcommand{\YellowOrange}[1]{\textcolor{YellowOrange}{#1}}
 \newcommand{\WildStrawberry}[1]{\textcolor{WildStrawberry}{#1}}
 
+\definecolor{cA}{HTML}{0072BD}
+\definecolor{cB}{HTML}{EDB120}
+\definecolor{cC}{HTML}{77AC30}
+\definecolor{cD}{HTML}{D95319}
+
 \usetikzlibrary{calc,matrix,math}
 
 \begin{document}
 \begin{tikzpicture}[
-        myBlock1/.style={draw=blue,fill=blue!50,thick},
-        myBlock2/.style={draw=orange,fill=orange!50,thick},
-        myBlock3/.style={draw=ForestGreen,fill=ForestGreen!50,thick},
+        myBlock1/.style={draw=cA,fill=cA!50,thick},
+        myBlock2/.style={draw=cB,fill=cB!50,thick},
+        myBlock3/.style={draw=cC,fill=cC!50,thick},
         myNode/.style={align=right,midway},
     ]
     \foreach \i/\bit in {0/00,1/01,2/10,3/11}{
     \renewcommand{\baselinestretch}{1.5}
-    \draw[myBlock1](0,-3/4*\i) rectangle (1,-3/4*\i-0.75) node[myNode] {$+P_{\bit}$};
+    \draw[myBlock1](0,-3/4*\i) rectangle (1,-3/4*\i-0.75) node[myNode] {$+b_{\bit}$};
     \renewcommand{\baselinestretch}{1.0}
     }
 
@@ -49,8 +54,8 @@
             16/+/+/-i/+i/1/1/1/1.20/\black
         }{
             \renewcommand{\baselinestretch}{1.5}
-            \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a P_{00}$\\$\c P_{10}$};
-            \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b P_{01}$\\$\d P_{11}$};
+            \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a b_{00}$\\$\c b_{10}$};
+            \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b b_{01}$\\$\d b_{11}$};
             \renewcommand{\baselinestretch}{1.0}
             \node[anchor=north west] at (\pos+1.2,-4) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
             \node[anchor=north west] at (\pos+1.2,-5) {$Q=\mqty[\y&\z\\&?]$};
@@ -73,7 +78,7 @@
         }{
             \renewcommand{\baselinestretch}{1.5}
             \draw[myBlock3] (\x,-8) rectangle (\x+1,-11)
-            node[myNode] {$\a P_{00}$\\$\c P_{10}$\\$\b P_{01}$\\$\d P_{11}$};
+            node[myNode] {$\a b_{00}$\\$\c b_{10}$\\$\b b_{01}$\\$\d b_{11}$};
             \renewcommand{\baselinestretch}{1.0}
             \node[font=\large] at (\x+0.5,-11.5) {$\i$};
         }
@@ -103,17 +108,17 @@
     \node[anchor=center,font=\LARGE] at (10,-5.5) {$\cdots$};
     \node[anchor=center,font=\LARGE] at (10,-9.5) {$\cdots$};
 
-    \node[font=\LARGE,blue] at (-1,-1.5) {$2^2$};
-    \node[font=\LARGE,orange] at (-1,-5.5) {$2^1$};
-    \node[font=\LARGE,ForestGreen] at (-1,-9.5) {$2^0$};
+    \node[font=\LARGE,cA] at (-1,-1.5) {$2^2$};
+    \node[font=\LARGE,cB] at (-1,-5.5) {$2^1$};
+    \node[font=\LARGE,cC] at (-1,-9.5) {$2^0$};
 
     \node[font=\LARGE,align=left] at (7,-1.5) {
         Define:\\
-        $n=k=2, R=I_n, t=0, P_{x} \defeq \braket{x}{\psi}$
+        $n=k=2, R=I_n, t=0, b_{x} \defeq \braket{x}{\psi}$
     };
     \node[font=\LARGE,align=left] at (15,-1.5) {
     Evaluate: \\
-    $\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x$
+    $\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} b_x$
     };
 
 \end{tikzpicture}

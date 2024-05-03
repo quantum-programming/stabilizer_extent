@@ -38,33 +38,39 @@
     \definecolor{cC}{HTML}{EDB120}
     \definecolor{cD}{HTML}{77AC30}
 
-    \foreach \x/\ar/\ai/\br/\bi/\cr/\ci/\dr/\di in {
-            0/1/-5/-2/-2/1/3/-7/1,
-            1/5/1/2/2/1/3/1/7,
-            2/-1/5/2/2/1/3/1/7,
-            3/-1/5/-2/2/1/3/1/7,
-            4/-1/5/-2/2/-3/1/1/7
+    \node[anchor=center] at (13*-0.2,9) {Input};
+
+    \foreach \x/\y/\ar/\ai/\br/\bi/\cr/\ci/\dr/\di/\alpha in {
+            0/2/1/-5/-2/-2/1/3/-7/1/100,
+            1/0/5/1/2/2/1/3/1/7/100,
+            2/0/-1/5/2/2/1/3/1/7/100,
+            3/0/-1/5/-2/2/1/3/1/7/100,
+            4/0/-1/5/-2/2/-3/1/1/7/100,
+            5/0/-1/5/-2/2/-3/1/-7/1/50
         }{
             \ifthenelse{\x=0}{
-                \node[anchor=center,cA] at (\ar*1.4,\ai*1.4) {$P_{00}$};
-                \node[anchor=center,cB] at (\br*1.4,\bi*1.4) {$P_{01}$};
-                \node[anchor=center,cC] at (\cr*1.4,\ci*1.4) {$P_{10}$};
-                \node[anchor=center,cD] at (\dr*1.4,\di*1.4) {$P_{11}$};
+                \begin{scope}[yshift=\y cm]
+                    \node[anchor=center,cA!\alpha] at (\ar*1.4,\ai*1.4) {$b_{00}$};
+                    \node[anchor=center,cB!\alpha] at (\br*1.4,\bi*1.4) {$b_{01}$};
+                    \node[anchor=center,cC!\alpha] at (\cr*1.4,\ci*1.4) {$b_{10}$};
+                    \node[anchor=center,cD!\alpha] at (\dr*1.4,\di*1.4) {$b_{11}$};
+                \end{scope}
             }{}
-            \begin{scope}[xshift=13*\x cm]
-                \draw[->,thick,cA] (0,0) -- (\ar,\ai);
-                \draw[->,thick,cB] (0,0) -- (\br,\bi);
-                \draw[->,thick,cC] (0,0) -- (\cr,\ci);
-                \draw[->,thick,cD] (0,0) -- (\dr,\di);
+            \begin{scope}[xshift=13*\x cm, yshift=\y cm]
+                \draw[->,thick,cA!\alpha] (0,0) -- (\ar,\ai);
+                \draw[->,thick,cB!\alpha] (0,0) -- (\br,\bi);
+                \draw[->,thick,cC!\alpha] (0,0) -- (\cr,\ci);
+                \draw[->,thick,cD!\alpha] (0,0) -- (\dr,\di);
             \end{scope}
         }
 
-    \draw (13/2,+9) -- (13/2,-9);
+    \node[black!60,anchor=center,align=center] at (13*4.8,9) {same as\\the first one};
+    \draw (13/2,+11) -- (13/2,-7);
     \draw [
         thick,
         decoration={brace,mirror,amplitude=10pt},
         decorate
-    ] (13-2,-2) -- (13*4+2,-2) node [pos=0.5,anchor=north,yshift=-10pt]
+    ] (13-2,-1) -- (13*5+2,-1) node [pos=0.5,anchor=north,yshift=-10pt]
     {The maximum exists among these};
 \end{tikzpicture}
 \end{document}
