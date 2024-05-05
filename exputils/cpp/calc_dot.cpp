@@ -156,13 +156,12 @@ struct dotCalculator {
                               ret_idx_local + (kkk12s[k] >> (3 + i)));
             stk2.emplace_back(q_0, i + 1, ret_idx_local);
           } else {
-            double threshold_1 = calc_threshold_1(k - 1, next.begin());
-            if (threshold_1 < threshold) continue;
-            double threshold_2 = ret_size == -1
-                                     ? std::numeric_limits<double>::infinity()
-                                     : calc_threshold_2(k - 1, next.begin());
-            if (threshold_2 < threshold * threshold) continue;
-            stk1.emplace_back(threshold_2, k - 1, next, ret_idx_local);
+            double t1 = calc_threshold_1(k - 1, next.begin());
+            if (t1 < threshold) continue;
+            double t2 = ret_size == -1 ? std::numeric_limits<double>::infinity()
+                                       : calc_threshold_2(k - 1, next.begin());
+            if (t2 < threshold * threshold) continue;
+            stk1.emplace_back(std::sqrt(t2), k - 1, next, ret_idx_local);
             if (ret_size != -1 && int(stk1.size()) > 2 * ret_size) {
               std::sort(ALL(stk1), [](const auto& a, const auto& b) {
                 return std::get<0>(a) > std::get<0>(b);
@@ -290,14 +289,53 @@ struct dotCalculator {
     assert(int(psi.size()) == (1 << n));
     if (is_dual_mode) threshold = 1.00;
 
+    // Total number of stabilizer states
+    INT t_s_g_s = total_stabilizer_group_size(n);
+
+    // do rough estimation for the threshold
+    if (n > 2) {
+      const int BEAM_WIDTH = 10;
+      vec<std::tuple<double, int, vc, INT>> stk1;
+      vc psi_multiplied_by_sqrt2 = psi;
+      double coeff = 1.0 / std::pow(std::sqrt(2), n);
+      for (auto& x : psi_multiplied_by_sqrt2) x *= coeff;
+      stk1.emplace_back(0.0, n, psi_multiplied_by_sqrt2,
+                        t_s_g_s - (q_binomial(n, n) << (n + n * (n + 1) / 2)));
+      while (std::get<1>(stk1[0]) > 2) {
+        vec<std::tuple<double, int, vc, INT>> new_stk1;
+        for (auto& [_, k, psi, ret_idx] : stk1) {
+          auto stk1_sub = dfs_sub(k, psi, BEAM_WIDTH, ret_idx);
+          new_stk1.insert(new_stk1.end(), std::make_move_iterator(stk1_sub.begin()),
+                          std::make_move_iterator(stk1_sub.end()));
+        }
+        std::sort(ALL(new_stk1), [](const auto& a, const auto& b) {
+          return std::get<0>(a) > std::get<0>(b);
+        });
+        if (new_stk1.size() > BEAM_WIDTH) new_stk1.resize(BEAM_WIDTH);
+        if (new_stk1.empty()) break;
+        std::swap(stk1, new_stk1);
+      }
+      vec<std::pair<double, INT>> values_local;
+      for (auto& [_, k, psi, ret_idx] : stk1) {
+        for (int i = 0; i < kkk12s[2]; i++) {
+          double val =
+              std::abs(Amats.Amat2[i][0] * psi[0] + Amats.Amat2[i][1] * psi[1] +
+                       Amats.Amat2[i][2] * psi[2] + Amats.Amat2[i][3] * psi[3]);
+          if (val > threshold) values_local.emplace_back(val, ret_idx);
+          ret_idx++;
+        }
+      }
+      add_to_values(values_local);
+      std::sort(ALL(values),
+                [](const auto& a, const auto& b) { return a.first > b.first; });
+      debug("max", values[0].first);
+    }
+
     // For the case k=0
     for (int i = 0; i < (1 << n); i++)
       if (std::abs(psi[i]) > threshold) values.emplace_back(std::abs(psi[i]), i);
     std::sort(ALL(values),
               [](const auto& a, const auto& b) { return a.first > b.first; });
-
-    // Total number of stabilizer states
-    INT t_s_g_s = total_stabilizer_group_size(n);
 
     for (int k = 1; k <= n; k++) {
       // rref means the reduced row echelon form of the matrix R.
@@ -391,7 +429,7 @@ int main() {
     for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
   } catch (const std::exception& e) {
-    n = 7;
+    n = 6;
     psi.resize(1 << n);
     std::mt19937 mt(1);
     for (int i = 0; i < 1 << n; i++)
