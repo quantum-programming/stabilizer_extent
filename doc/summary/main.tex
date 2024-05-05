@@ -255,11 +255,19 @@ for the stabilizer extent calculation too.
     \label{alg:CG}
 \end{algorithm}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\columnwidth]{../../image/K_vs_extent_7.pdf}
+\begin{figure}[t]
+    \begin{minipage}{0.55\hsize}
+        \centering
+        \includegraphics[width=\columnwidth]{../../image/K_vs_extent_7.pdf}
+        \subcaption{}
+    \end{minipage}
+    \begin{minipage}{0.45\hsize}
+        \centering
+        \includegraphics[width=\columnwidth]{../../image/CG_7.pdf}
+        \subcaption{}
+    \end{minipage}
     \caption{
-        Calculated stabilizer extent
+        (a) Calculated stabilizer extent
         for random pure state of 7 qubits
         under a restricted set of stabilizer states.
         The ratio $K \defeq \abs{\calC}/\abs{\calA_n}$
@@ -267,9 +275,15 @@ for the stabilizer extent calculation too.
         By selecting the stabilizer states with the top overlaps,
         we get much better approximation values
         compared to the randomly selected ones.
+        (b) The convergence of the CG method
+        for the same case.
+        The max violation becomes 1.00
+        after 10 iterations, which means
+        the optimal solution is found.
     }
-    \label{fig:label}
+    \label{fig:CG}
 \end{figure}
+
 
 \subsection{Core Subroutine: Calculating Overlap}
 \label{sec:coreSubroutine}
@@ -339,7 +353,7 @@ Then, the next theorem holds.
     is also optimal for the original problem.
 \end{restatable}
 
-Thanks to this theorem,
+Thanks to theorem~\ref{thm:restrictedRealProblem},
 we can reduce the size of the column set size
 by a factor of $2^n$.
 
