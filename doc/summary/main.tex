@@ -228,7 +228,7 @@ In order to tackle this kind of problem,
 we have proposed to utilize the
 column generation (CG) method
 in~\cite{hamaguchiHandbookEfficientlyQuantifying2023}.
-The CG method is a well-known technique
+The CG method is a classical technique
 to solve large-scale optimization problems.
 Here, we show that similar method actually works
 for the stabilizer extent calculation too.
@@ -254,6 +254,22 @@ for the stabilizer extent calculation too.
     \caption{Exact stabilizer extent calculation by Column Generation}
     \label{alg:CG}
 \end{algorithm}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{../../image/K_vs_extent_7.pdf}
+    \caption{
+        Calculated stabilizer extent
+        for random pure state of 7 qubits
+        under a restricted set of stabilizer states.
+        The ratio $K \defeq \abs{\calC}/\abs{\calA_n}$
+        varies from $10^{-8}$ to $10^{-7}$.
+        By selecting the stabilizer states with the top overlaps,
+        we get much better approximation values
+        compared to the randomly selected ones.
+    }
+    \label{fig:label}
+\end{figure}
 
 \subsection{Core Subroutine: Calculating Overlap}
 \label{sec:coreSubroutine}
