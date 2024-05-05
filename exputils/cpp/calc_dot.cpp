@@ -47,7 +47,7 @@ struct dotCalculator {
   vec<std::pair<double, INT>> values;
   INT branch_cut = 0;
   double threshold = 0.0;
-  static constexpr size_t MAX_VALUES_SIZE = 5000;
+  static constexpr size_t MAX_VALUES_SIZE = 10000;
   static constexpr int LARGE_K = 7;
 
   vc arange_psi_by_t(int k, int t, const vi& row_idxs, const vc& psi_normalized) {
@@ -293,7 +293,7 @@ struct dotCalculator {
     INT t_s_g_s = total_stabilizer_group_size(n);
 
     // do rough estimation for the threshold
-    if (n > 2) {
+    if (false) {
       const int BEAM_WIDTH = 10;
       vec<std::tuple<double, int, vc, INT>> stk1;
       vc psi_multiplied_by_sqrt2 = psi;
