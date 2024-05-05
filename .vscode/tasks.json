@@ -3,12 +3,13 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "C:\\Program Files\\mingw64\\bin\\g++.exe",
+            // "command": "C:\\Program Files\\mingw64\\bin\\g++.exe",
+            "command": "/usr/bin/g++-10",
             "args": [
                 // "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "${fileDirname}/${fileBasenameNoExtension}.exe",
                 "-std=c++17",
                 "-Wall",
                 "-Wextra",

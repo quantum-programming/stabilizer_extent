@@ -134,6 +134,7 @@
         "mosek",
         "Moser",
         "mpl_toolkits",
+        "mtune",
         "multiprocess",
         "myrand",
         "nbytes",
