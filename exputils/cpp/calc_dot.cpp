@@ -391,7 +391,7 @@ int main() {
     for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
   } catch (const std::exception& e) {
-    n = 3;
+    n = 5;
     psi.resize(1 << n);
     std::mt19937 mt(1);
     for (int i = 0; i < 1 << n; i++)
