@@ -124,7 +124,7 @@
 % --------------------  TITLE  --------------------
 
 \begin{document}
-\title{Stabilizer Extent}
+\title{Stabilizer Extent Calculation by Column Generation}
 
 % ------------  AUTHORS AND AFFILIATIONS ----------
 \author{Hiroki Hamaguchi}
@@ -151,6 +151,19 @@
 \section{Introduction}
 
 \orange{todo}
+% 方向性?
+% 0. quantum resource measureの重要性
+% 1. RoMではstabilizer extentへの拡張が示唆されていた
+% 2. その拡張可能性は以下の点で自明ではなかった
+%   - 内積計算においてFWHTが使えない
+%   - LPよりもSOCPの方が一般に難しいクラスの問題である
+% 3. 本研究では、stabilizer extentの計算が
+%    実際にはCG法を用いて効率的に行えることを示す
+%    また、工夫した内積計算により、
+%    定数倍を除いて最適な時間計算量のアルゴリズムを提案する
+% 4. 結果として、
+%    ランダムケースでは...
+%    テンソル積の場合では...
 
 \section{Preliminaries}
 
@@ -182,15 +195,26 @@ As in \cite{heimendahlStabilizerExtentNot2021},
 the problem \eqref{eq:stabilizerExtentPrimal}
 is a second order cone program (SOCP).
 Thus, its dual problem can be derived
-as~\cite[Appendix A]{heimendahlStabilizerExtentNot2021}\cite[Section 5.1.6]{boydConvexOptimization2004}
+~\cite[Appendix A]{heimendahlStabilizerExtentNot2021}\cite[Section 5.1.6]{boydConvexOptimization2004}.
+By defining $\calA_n$ as the set of columns $\{a_j\}$ of $A_n$,
 \begin{equation}\label{eq:stabilizerExtentDual}
-    \sqrt{\xi(\psi)} = \max_{y \in \bbC^{2^n}} \left\{ \Re(b^\dagger y) \;\middle|\; \abs{a_j^\dagger y} \leq 1 \text{ for all } j \right\},
+    \sqrt{\xi(\psi)} = \max_{y \in \bbC^{2^n}} \left\{ \Re(b^\dagger y) \;\middle|\; \abs{a_j^\dagger y} \leq 1
+    \text{ for all $a_j \in \calA_n$} \right\}.
 \end{equation}
-where $a_j \in \bbC^{2^n}$ is the $j$-th column of $A_n$
-and $\dagger$ denotes the conjugate transpose.
+where $\dagger$ denotes the conjugate transpose.
 Although the actual objective function in~\eqref{eq:stabilizerExtentDual}
 should be multiplied by $-1$,
 we flipped the sign for simplicity, which does not affect the solution.
+
+In order to describe our algorithm in later sections,
+we denote a function $\text{SolveSOCP}(\calC, b)$
+which takes a set of columns $\calC$ and a vector $b$,
+and returns the optimal solution $E$ and
+dual optimal solution $\bm{y}$ of
+the SOCP problem~\eqref{eq:stabilizerExtentDual}.
+In actual numerical computation,
+this function can be realized by just solving
+the corresponding primal problem~\eqref{eq:stabilizerExtentPrimal}.
 
 \section{Scaling up The Exact Stabilizer Extent Calculation}
 
@@ -218,7 +242,7 @@ for the stabilizer extent calculation too.
     $\calC \gets \text{Partial set of $\calA_n$}$
     \Comment*[r]{Initialize using top overlaps}
     \While{true}{
-        $R, \bm{y} \gets \SolveSOCP(\calC, \bm{b})$\\
+        $E, \bm{y} \gets \SolveSOCP(\calC, \bm{b})$\\
         $\calC' \gets \qty{\bm{a} \in \calA_n \mathrel{}\middle|\mathrel{} \abs{\bm{a}^\dagger \bm{y}} > 1}$
         \Comment*[r]{Use of subroutine in Section~\ref{sec:coreSubroutine}}
         \If {$\calC' = \emptyset$} {
@@ -226,7 +250,7 @@ for the stabilizer extent calculation too.
         }
         $\calC \gets \calC \cup \calC'$\\
     }
-    $\Return$ $R$
+    $\Return$ $E$
     \caption{Exact stabilizer extent calculation by Column Generation}
     \label{alg:CG}
 \end{algorithm}
@@ -264,35 +288,71 @@ the stabilizer states have a simple form as shown in the following proposition.
 \subsection{For the case $\ket{\psi}$ is Real}
 \label{sec:restrictedRealProblem}
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\columnwidth]{imgs/Amat.pdf}
+    \caption{
+        Visualization of the matrix $A_n$ with $n=2$.
+        The upper half corresponds to the real part,
+        and the lower half corresponds to the imaginary part.
+        The $j$-th column of this represents
+        the column $a_j$ and its state $\ket{\phi_j}$.
+        The $k$ below the matrix
+        corresponds to
+        the standard form \eqref{eq:stabilizerStateStandardForm}.
+        By restricting the matrix $A_n$
+        to the starred columns
+        which are real vectors,
+        we can obtain the matrix $A_n'$.
+    }
+    \label{fig:Amat}
+\end{figure}
+
 In some cases, the state $\ket{\psi}$ could be real.
 For example, ... .
-In these cases, we can further simplify the problem.
+We show that in such cases the problem can be further simplified.
 We define the subset of the states in $\calS_n$ with real coefficients as $\calT_n$,
-and the corresponding matrix $A_n$ as $A_n'$.
+and the corresponding subset of the columns in $\calA_n$ as $\calA'_n$.
 Then, the next theorem holds.
 \begin{restatable}{theorem}{restrictedRealProblem}
     \label{thm:restrictedRealProblem}
     Suppose that the state $\ket{\psi}$ is real.
-    If we substitute the matrix $A_n$
-    with the matrix $A_n'$
+    If we substitute the column set $\calA_n$ with $\calA'_n$
     in the problem~\eqref{eq:stabilizerExtentPrimal},
     the optimal solution of the restricted problem
     is also optimal for the original problem.
 \end{restatable}
 
 Thanks to this theorem,
-we can reduce the size of the matrix $A_n$
+we can reduce the size of the column set size
 by a factor of $2^n$.
 
 \section{Approx Solutions}
 
 \section{Discussion}
 
-There are room for improvement.
+In this paper, we have shown that \orange{todo}.
+
+There is still room for improvement
+in some specific cases.
+As for Robustness of Magic,
+there is a marvelous algorithm
+proposed in~\cite{Heinrich2019robustnessofmagic}
+which focuses on copies of symmetric pure magic states,
+and we enhanced this result in~\cite{hamaguchiHandbookEfficientlyQuantifying2023}.
+Applying such techniques to the stabilizer extent calculation
+would be promising and is left for future work.
+
+Furthermore, there is some more future direction.
+For example, \orange{todo}.
 
 \emph{Acknowledgements.---}
 
-acknowledgements acknowledgements acknowledgements
+We would like to thank \orange{N. Marumo} for valuable comments on the manuscript.
+\orange{N.Y. wishes to thank JST PRESTO No. JPMJPR2119 and the support
+    from IBM Quantum. This work was supported by JST Grant Number JPMJPF2221.
+    This work was supported by JST ERATO Grant Number JPMJER2302 and JST CREST
+    Grant Number JPMJCR23I4, Japan.}
 
 \bibliographystyle{quantum}
 \bibliography{stabilizerExtent}
