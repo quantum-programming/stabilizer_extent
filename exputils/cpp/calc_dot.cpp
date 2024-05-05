@@ -19,8 +19,12 @@ struct dotCalculator {
 
   auto calc_dot(int n, const vc& psi, bool is_dual_mode) {
     timer1.start();
-    // Let P_x := <psi|x>, then <psi|phi> = \sum_{x} (-1)^{x^T Q x} i^{c^T x} P_{Rx+t}
-    // Thus, we use conjugate of psi[x] = <x|psi> for the calculation.
+    // Let b_i := <i|psi>, then
+    // <phi|psi>
+    // = (\sum_{x} (-1)^{x^T Q x} i^{c^T x} <Rx+t|) |psi>
+    // = \sum_{x} (-1)^{x^T Q x} i^{c^T x} b_{Rx+t}^\dagger
+    // Thus, we use conjugate of b_i as the input
+    // in order to avoid the conjugate operation in the inner loop.
     vc psi_conj = psi;
     for (auto& x : psi_conj) x = std::conj(x);
     calc_dot_main(n, psi_conj, is_dual_mode);
@@ -80,40 +84,45 @@ struct dotCalculator {
       return (x.real() <= 0) ? -x : x * COMPLEX(0, +1);
   }
 
+  double calc_threshold_1(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
+    // 1. The first condition:
+    // MAX <= sum_{x} |(-1)^{x^T Q x} i^{c^T x} b_x| = sum_{x} |b_x|
+    return std::accumulate(psi_begin, psi_begin + (1 << k), 0.0,
+                           [](double a, COMPLEX b) { return a + std::abs(b); });
+  }
+  double calc_threshold_2(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
+    // 2. The second condition:
+    // MAX <= sum_{x} |i^{c_x} b_x| where c_x \in {0,1,2,3}
+    // we can compute this threshold by sorting the complex numbers by their argument
+    vc Ys(1 << k);
+    double sum_ys_real = 0.0, sum_ys_imag = 0.0;
+    // rotate complex numbers to the first quadrant
+    for (size_t i = 0; i < Ys.size(); i++) {
+      Ys[i] = rotate_complex(*(psi_begin + i));
+      sum_ys_real += Ys[i].real();
+      sum_ys_imag += Ys[i].imag();
+    }
+    // sort by argument
+    std::sort(ALL(Ys), [](const auto a, const auto b) {
+      return a.imag() * b.real() < a.real() * b.imag();
+    });
+    // by iterating the sorted complex numbers, we can compute the threshold
+    double max_abs2 = sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag;
+    for (size_t i = 0; i < Ys.size(); ++i) {
+      sum_ys_real += -Ys[i].real() - Ys[i].imag();
+      sum_ys_imag += -Ys[i].imag() + Ys[i].real();
+      max_abs2 =
+          std::max(max_abs2, sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag);
+    }
+    return max_abs2;
+  }
   bool check_branch_cut(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
     // check if the branch cut is possible for k-th psi ([psi_begin, psi_begin+(1<<k)))
-    // Let MAX := max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} P_x| where P_x = <x|psi>
-
-    // 1. The first condition:
-    // MAX <= sum_{x} |(-1)^{x^T Q x} i^{c^T x} P_x| = sum_{x} |P_x|
-    double absSum =
-        std::accumulate(psi_begin, psi_begin + (1 << k), 0.0,
-                        [](double a, COMPLEX b) { return a + std::abs(b); });
+    // Let MAX := max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} b_x|
+    double absSum = calc_threshold_1(k, psi_begin);
     if (absSum >= threshold) return false;
     if (absSum < 1.2 * threshold) {
-      // 2. The second condition:
-      // MAX <= sum_{x} |i^{c_x} P_x| where c_x \in {0,1,2,3}
-      // we can compute this threshold by sorting the complex numbers by their argument
-      vc Ys(1 << k);
-      double sum_ys_real = 0.0, sum_ys_imag = 0.0;
-      // rotate complex numbers to the first quadrant
-      for (size_t i = 0; i < Ys.size(); i++) {
-        Ys[i] = rotate_complex(*(psi_begin + i));
-        sum_ys_real += Ys[i].real();
-        sum_ys_imag += Ys[i].imag();
-      }
-      // sort by argument
-      std::sort(ALL(Ys), [](const auto a, const auto b) {
-        return a.imag() * b.real() < a.real() * b.imag();
-      });
-      // by iterating the sorted complex numbers, we can compute the threshold
-      double max_abs2 = sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag;
-      for (size_t i = 0; i < Ys.size(); ++i) {
-        sum_ys_real += -Ys[i].real() - Ys[i].imag();
-        sum_ys_imag += -Ys[i].imag() + Ys[i].real();
-        max_abs2 =
-            std::max(max_abs2, sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag);
-      }
+      double max_abs2 = calc_threshold_2(k, psi_begin);
       if (max_abs2 >= threshold * threshold) return false;
     }
 #pragma omp atomic
@@ -121,33 +130,56 @@ struct dotCalculator {
     return true;
   }
 
-  void dfs_sub(const int k, const vc& psi, const int c_0, const int q_00, INT& ret_idx,
-               vec<std::tuple<int, vc, INT>>& stk1) {
-    vc next(1 << (k - 1));
-    next[0] = psi[0] + psi[1] * COMPLEX(q_00 ? -1 : 1) * (c_0 ? COMPLEX(0, 1) : 1);
-    COMPLEX coeff = c_0 ? COMPLEX(0, 1) : 1.0;
-    // non-recursive dfs
+  vec<std::tuple<double, int, vc, INT>> dfs_sub(const int k, const vc& psi,
+                                                const int ret_size, INT& ret_idx) {
+    vec<std::tuple<double, int, vc, INT>> stk1;
     vec<std::tuple<int, int, INT>> stk2;
-    stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3));
-    stk2.emplace_back(0, 1, ret_idx);
-    while (!stk2.empty()) {
-      auto [q_0, i, ret_idx_local] = stk2.back();
-      stk2.pop_back();
-      for (int x1 = 1 << (i - 1); x1 < 1 << i; x1++) {
-        if (__builtin_parity(q_00 ^ (q_0 & x1)))
-          next[x1] = psi[x1 << 1] - coeff * psi[(x1 << 1) ^ 1];
-        else
-          next[x1] = psi[x1 << 1] + coeff * psi[(x1 << 1) ^ 1];
+    vc next(1 << (k - 1));
+    for (int c_0 = 0; c_0 <= 1; c_0++)
+      for (int q_00 = 0; q_00 <= 1; q_00++) {
+        next[0] = psi[0] + psi[1] * COMPLEX(q_00 ? -1 : 1) * (c_0 ? COMPLEX(0, 1) : 1);
+        COMPLEX coeff = c_0 ? COMPLEX(0, 1) : 1.0;
+        // non-recursive dfs
+        stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3));
+        stk2.emplace_back(0, 1, ret_idx);
+        while (!stk2.empty()) {
+          auto [q_0, i, ret_idx_local] = stk2.back();
+          stk2.pop_back();
+          for (int x1 = 1 << (i - 1); x1 < 1 << i; x1++) {
+            if (__builtin_parity(q_00 ^ (q_0 & x1)))
+              next[x1] = psi[x1 << 1] - coeff * psi[(x1 << 1) ^ 1];
+            else
+              next[x1] = psi[x1 << 1] + coeff * psi[(x1 << 1) ^ 1];
+          }
+          if (i < k - 1) {
+            stk2.emplace_back(q_0 ^ (1 << i), i + 1,
+                              ret_idx_local + (kkk12s[k] >> (3 + i)));
+            stk2.emplace_back(q_0, i + 1, ret_idx_local);
+          } else {
+            double threshold_1 = calc_threshold_1(k - 1, next.begin());
+            if (threshold_1 < threshold) continue;
+            double threshold_2 = ret_size == -1
+                                     ? std::numeric_limits<double>::infinity()
+                                     : calc_threshold_2(k - 1, next.begin());
+            if (threshold_2 < threshold * threshold) continue;
+            stk1.emplace_back(threshold_2, k - 1, next, ret_idx_local);
+            if (ret_size != -1 && int(stk1.size()) > 2 * ret_size) {
+              std::sort(ALL(stk1), [](const auto& a, const auto& b) {
+                return std::get<0>(a) > std::get<0>(b);
+              });
+              stk1.resize(ret_size);
+            }
+          }
+        }
+        ret_idx += kkk12s[k] >> 2;
       }
-      if (i < k - 1) {
-        stk2.emplace_back(q_0 ^ (1 << i), i + 1,
-                          ret_idx_local + (kkk12s[k] >> (3 + i)));
-        stk2.emplace_back(q_0, i + 1, ret_idx_local);
-      } else {
-        stk1.emplace_back(k - 1, next, ret_idx_local);
-      }
+    if (ret_size != -1 && int(stk1.size()) > ret_size) {
+      std::sort(ALL(stk1), [](const auto& a, const auto& b) {
+        return std::get<0>(a) > std::get<0>(b);
+      });
+      stk1.resize(ret_size);
     }
-    ret_idx += kkk12s[k] >> 2;
+    return stk1;
   }
 
   vec<std::pair<double, INT>> calc_dot_sub(const int k_orig, const vc& psi_orig,
@@ -243,18 +275,14 @@ struct dotCalculator {
     // parallelize. Thus, we parallelize by the first step of the non-recursive dfs.
     assert(LARGE_K <= k && int(psi.size()) == (1 << k));
     if (check_branch_cut(k, psi.begin())) return;
-    vec<std::tuple<int, vc, INT>> stk1;
-    stk1.reserve(1 << (k + 1));
-    for (int c_0 = 0; c_0 <= 1; c_0++)
-      for (int q_00 = 0; q_00 <= 1; q_00++) dfs_sub(k, psi, c_0, q_00, ret_idx, stk1);
-    assert(int(stk1.size()) == (1 << (k + 1)));
+    auto stk1 = dfs_sub(k, psi, -1, ret_idx);
 
 #pragma omp parallel for schedule(dynamic) num_threads(omp_get_max_threads())
     for (int i = 0; i < int(stk1.size()); i++) {
-      auto [k, psi, ret_idx] = stk1[i];
+      auto [_, k, psi, ret_idx] = stk1[i];
       auto res = calc_dot_sub(k, psi, ret_idx);
       if (!res.empty()) add_to_values(res);
-      std::get<1>(stk1[i]).clear();
+      std::get<2>(stk1[i]).clear();
     }
   }
 
