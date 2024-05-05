@@ -1,10 +1,6 @@
 import sys
 
-import cvxopt as cvx
-import gurobipy as gp
-import mosek
 import numpy as np
-from gurobipy import GRB
 from scipy.sparse import csc_matrix
 from tqdm.auto import tqdm
 from typing import Tuple
@@ -17,6 +13,8 @@ def _calculate_by_cvx(n: int, Amat: np.ndarray, psi: np.ndarray, verbose=False):
         s.t. Amat @ x = psi
     See documents in doc folder for more details.
     """
+    import cvxopt as cvx
+
     assert Amat.shape[0] == psi.size == 2**n
     assert Amat.shape[1] <= total_stabilizer_group_size(n)
     sz = Amat.shape[1]
@@ -64,6 +62,8 @@ def _calculate_by_mosek(n: int, Amat: csc_matrix, psi: np.ndarray, verbose=False
         s.t. Amat @ x = psi
     See documents in doc folder for more details.
     """
+    import mosek
+
     assert Amat.shape[0] == psi.size == 2**n
     assert 2**n <= Amat.shape[1] <= total_stabilizer_group_size(n)
     sz = Amat.shape[1]
@@ -161,6 +161,9 @@ def _calculate_by_gurobi(n: int, Amat: csc_matrix, psi: np.ndarray, verbose=Fals
         s.t. Amat @ x = psi
     See documents in doc folder for more details.
     """
+    import gurobipy as gp
+    from gurobipy import GRB
+
     assert Amat.shape[0] == psi.size == 2**n
     assert Amat.shape[1] <= total_stabilizer_group_size(n)
     sz = Amat.shape[1]
