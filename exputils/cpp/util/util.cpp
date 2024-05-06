@@ -1,87 +1,50 @@
 #pragma once
+#include "base.cpp"
 
-#include <algorithm>
-#include <array>
-#include <bitset>
-#include <cassert>
-#include <chrono>
-#include <complex>
-#include <deque>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <list>
-#include <map>
-#include <numeric>
-#include <ostream>
-#include <queue>
-#include <random>
-#include <set>
-#include <stack>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+vc arange_psi_by_t(int k, int t, const vi& row_idxs, const vc& psi_normalized) {
+  vc psi2(1 << k);
+  for (int x = 0; x < (1 << k); x++) psi2[x] = psi_normalized[row_idxs[x] ^ t];
+  return psi2;
+}
 
-// clang-format off
-template <typename T> using vec = std::vector<T>;
-template <typename T> using vvec = std::vector<vec<T>>;
-template <typename T> using vvvec = std::vector<vvec<T>>;
-using INT = long long;
-using COMPLEX = std::complex<double>;
-using vi = vec<int>; using vvi = vec<vi>; using vvvi = vec<vvi>;
-using vb = vec<bool>; using vvb = vec<vb>; using vvvb = vec<vvb>;
-using vc = vec<COMPLEX>; using vvc = vec<vc>; using vvvc = vec<vvc>;
-#define ALL(x) begin(x), end(x)
+COMPLEX rotate_complex(const COMPLEX x) {
+  // only for 'check_branch_cut'
+  if (x.imag() >= 0)
+    return (x.real() >= 0) ? +x : x * COMPLEX(0, -1);
+  else
+    return (x.real() <= 0) ? -x : x * COMPLEX(0, +1);
+}
 
-struct Timer{
-    void start(){_start=std::chrono::system_clock::now();}
-    void stop(){_end=std::chrono::system_clock::now();sum+=std::chrono::duration_cast<std::chrono::nanoseconds>(_end-_start).count();}
-    inline int ms()const{const std::chrono::system_clock::time_point now=std::chrono::system_clock::now();return static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(now-_start).count()/1000);}
-    inline int ns()const{const std::chrono::system_clock::time_point now=std::chrono::system_clock::now();return static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(now-_start).count());}
-    std::string report(){stop();start();return std::to_string(sum/1000000)+"[ms]";}
-    void reset(){_start=std::chrono::system_clock::now();sum=0;}
-    private: std::chrono::system_clock::time_point _start,_end;long long sum=0;
-} timer;
+double calc_threshold_1(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
+  // 1. The first condition:
+  // MAX <= sum_{x} |(-1)^{x^T Q x} i^{c^T x} b_x| = sum_{x} |b_x|
+  return std::accumulate(psi_begin, psi_begin + (1 << k), 0.0,
+                         [](double a, COMPLEX b) { return a + std::abs(b); });
+}
 
-struct Xor128{  // period 2^128 - 1
-    uint32_t x,y,z,w;
-    Xor128(uint32_t seed=0):x(123456789),y(362436069),z(521288629),w(88675123+seed){}
-    uint32_t operator()(){uint32_t t=x^(x<<11);x=y;y=z;z=w;return w=(w^(w>>19))^(t^(t>>8));}
-    uint32_t operator()(uint32_t l,uint32_t r){return((*this)()%(r-l))+l;}
-    uint32_t operator()(uint32_t r){return(*this)()%r;}};
-struct Rand {  // https://docs.python.org/ja/3/library/random.html
-    Rand(int seed):gen(seed){};
-    template<class T>
-    void shuffle(vec<T>&x){for(int i=x.size(),j;i>1;){j=gen(i);swap(x[j],x[--i]);}}
-   private:
-    Xor128 gen;
-} myrand(0);
-// clang-format on
-
-// https://stackoverflow.com/questions/25114597/how-to-print-int128-in-g
-std::ostream& operator<<(std::ostream& dest, __int128_t value) {
-  std::ostream::sentry s(dest);
-  if (s) {
-    __uint128_t tmp = value < 0 ? -value : value;
-    char buffer[128];
-    char* d = std::end(buffer);
-    do {
-      --d;
-      *d = "0123456789"[tmp % 10];
-      tmp /= 10;
-    } while (tmp != 0);
-    if (value < 0) {
-      --d;
-      *d = '-';
-    }
-    int len = std::end(buffer) - d;
-    if (dest.rdbuf()->sputn(d, len) != len) {
-      dest.setstate(std::ios_base::badbit);
-    }
+double calc_threshold_2(const int k, const vec<COMPLEX>::const_iterator psi_begin) {
+  // 2. The second condition:
+  // MAX <= sum_{x} |i^{c_x} b_x| where c_x \in {0,1,2,3}
+  // we can compute this threshold by sorting the complex numbers by their argument
+  vc Ys(1 << k);
+  double sum_ys_real = 0.0, sum_ys_imag = 0.0;
+  // rotate complex numbers to the first quadrant
+  for (size_t i = 0; i < Ys.size(); i++) {
+    Ys[i] = rotate_complex(*(psi_begin + i));
+    sum_ys_real += Ys[i].real();
+    sum_ys_imag += Ys[i].imag();
   }
-  return dest;
+  // sort by argument
+  std::sort(ALL(Ys), [](const auto a, const auto b) {
+    return a.imag() * b.real() < a.real() * b.imag();
+  });
+  // by iterating the sorted complex numbers, we can compute the threshold
+  double max_abs2 = sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag;
+  for (size_t i = 0; i < Ys.size(); ++i) {
+    sum_ys_real += -Ys[i].real() - Ys[i].imag();
+    sum_ys_imag += -Ys[i].imag() + Ys[i].real();
+    max_abs2 =
+        std::max(max_abs2, sum_ys_real * sum_ys_real + sum_ys_imag * sum_ys_imag);
+  }
+  return max_abs2;
 }

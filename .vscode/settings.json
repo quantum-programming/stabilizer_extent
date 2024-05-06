@@ -305,6 +305,12 @@
         "regex": "cpp",
         "string_view": "cpp",
         "numbers": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "cinttypes": "cpp"
     },
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "util.cpp"
+#include "base.cpp"
 
 vvi generate_combinations(int n, int k) {
   // https://stackoverflow.com/questions/9430568/generating-combinations-in-c
@@ -39,6 +39,7 @@ INT q_binomial(int n, int k) {
   // https://mathworld.wolfram.com/q-BinomialCoefficient.html
   // q_binomial where q=2
   // [n k]_q = \frac{[n]_q!}{[k]_q! [n-k]_q!}
+  if (n - 1 == k) return (1ll << n) - 1;
   INT ret1 = q_factorial(n) / (q_factorial(k) * q_factorial(n - k));
   INT ret2 = 1;
   for (int i = 0; i < k; i++) {
