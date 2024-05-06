@@ -2,12 +2,17 @@ import numpy as np
 import scipy.sparse
 from exputils.extent.custom import calculate_extent_custom
 from exputils.dot.get_topK_Amat import get_topK_Amat
+from exputils.dot.get_rough_Amat import get_rough_Amat
 
 
-def calculate_extent_CG(n: int, psi: np.ndarray, method: str = "mosek"):
+def calculate_extent_CG(
+    n: int, psi: np.ndarray, method: str = "mosek", Amat_method="topK"
+) -> tuple:
+    assert Amat_method in ["topK", "rough"]
     print(f"CG: {n=}, {method=}")
     print("start: calculate dots")
-    current_Amat = get_topK_Amat(n, psi, False)
+    get_Amat = get_topK_Amat if Amat_method == "topK" else get_rough_Amat
+    current_Amat = get_Amat(n, psi, False)
     iter_max = 100
     eps = 1e-8
     discard_current_threshold = 0.8
@@ -18,16 +23,16 @@ def calculate_extent_CG(n: int, psi: np.ndarray, method: str = "mosek"):
         print(f"iteration: {it + 1} / {iter_max}, Amat.shape = {current_Amat.shape}")
         print("start: solve SOCP")
         stabilizer_extent, coeff, dual = calculate_extent_custom(
-            n, current_Amat, psi, method
+            n, current_Amat, psi, method, verbose=True
         )
         extends.append(stabilizer_extent)
         print(f"{stabilizer_extent=}")
         print("start: calculate dual dots")
-        dual_dots_state = get_topK_Amat(n, dual, True)
+        dual_dots_state = get_Amat(n, dual, True)
         dual_dots = np.abs(dual.conj().T @ dual_dots_state)
         dual_violated_indices = dual_dots > 1 + eps
         violated_count = np.sum(dual_violated_indices)
-        max_values.append(max(1.0, np.max(dual_dots)))
+        max_values.append(max(1.0, np.max(dual_dots) if len(dual_dots) > 0 else 0))
         print(
             f"# of violations: {violated_count}"
             + ("+ more" if violated_count == 5000 else "")

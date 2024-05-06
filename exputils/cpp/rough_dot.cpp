@@ -1,6 +1,9 @@
 #include "include/include.hpp"
 #include "rref.cpp"
 
+// {value, k, Q, c, row_idxs, t}
+using Info = std::tuple<double, int, __int128_t, int, vi, int>;
+
 COMPLEX xQc_to_coeff(int k, int x, __int128_t Q, int c) {
   int cx = 0, xQx = 0, Q_idx = 0;
   for (int i = 0; i < k; i++) {
@@ -27,7 +30,39 @@ __int128_t randRangePow2(int m) {
   return ret;
 }
 
-double fast(int k, const vc& b) {
+template <typename... T>
+void truncate_goods(vec<std::tuple<T...>>& goods, size_t max_size,
+                    bool do_remove_duplicates) {
+  if (do_remove_duplicates) {
+    std::sort(ALL(goods), std::greater<>());
+    goods.erase(std::unique(ALL(goods),
+                            [&](const auto& a, const auto& b) {
+                              return std::get<1>(a) == std::get<1>(b) &&
+                                     std::get<2>(a) == std::get<2>(b);
+                            }),
+                goods.end());
+  } else {
+    std::sort(ALL(goods), [](const auto& a, const auto& b) {
+      return std::get<0>(a) > std::get<0>(b);
+    });
+  }
+  if (goods.size() > max_size) goods.resize(max_size);
+}
+
+std::pair<vi, vc> make_col_from_QcRt(int k, __int128_t Q, int c, const vi& row_idxs,
+                                     int t) {
+  vi indices;
+  vc values;
+  double coeff_2k = 1.0 / std::pow(2, k / 2.0);
+  assert(!row_idxs.empty() || t == 0);
+  for (int x = 0; x < (1 << k); x++) {
+    values.push_back(xQc_to_coeff(k, x, Q, c) * coeff_2k);
+    indices.push_back((row_idxs.empty() ? x : row_idxs[x]) ^ t);
+  }
+  return {indices, values};
+}
+
+vec<Info> hill_climbing(int k, const vc& b, const bool is_dual_mode) {
   vec<std::pair<int, vi>> Q_non_diag;
   int Q_idx = 0;
   for (int i = 0; i < k; i++)
@@ -40,20 +75,23 @@ double fast(int k, const vc& b) {
       }
       Q_idx += 1;
     }
-
   double coeff = 1.0 / std::pow(2, k / 2.0);
-  double max_val = 0;
   vc coeffs(1 << k);
   vi Ps(Q_non_diag.size());
   std::iota(ALL(Ps), 0);
   Timer timer_local;
   timer_local.start();
-  while (timer_local.ms() < 3 * 1000) {
+  vec<std::tuple<double, __int128_t, int>> good_Qc;
+  // This function is based on hill climbing algorithm.
+  while (timer_local.ms() < 1000) {
+    // 1. Randomly choose Q and c
     __int128_t Q = randRangePow2(k * (k + 1) / 2);
-    __int128_t c = randRangePow2(k);
+    int c = randRangePow2(k);
     for (int x = 0; x < (1 << k); x++) coeffs[x] = coeff * xQc_to_coeff(k, x, Q, c);
     COMPLEX now_sum = std::inner_product(ALL(coeffs), b.begin(), COMPLEX(0, 0));
     double now_abs = std::abs(now_sum);
+    // 2. Hill climbing
+    //    If there is a better Q and c with one bit flip, update it.
     while (true) {
       bool is_updated = false;
       myrand.shuffle(Ps);
@@ -74,76 +112,137 @@ double fast(int k, const vc& b) {
       if (!is_updated) break;
     }
     // assert(std::abs(now_abs - calc_abs_from_bQc(k, b, Q, c)) < 1e-9);
-    max_val = std::max(max_val, now_abs);
+    if (!is_dual_mode || now_abs > 1.0) good_Qc.emplace_back(now_abs, Q, c);
+    if (good_Qc.size() > 2000) truncate_goods(good_Qc, 1000, true);
   }
-  return max_val;
+  truncate_goods(good_Qc, 1000, true);
+  vec<Info> ret;
+  for (const auto& [val, Q, c] : good_Qc) ret.emplace_back(val, k, Q, c, vi(), 0);
+  return ret;
 }
 
-int main() {
-  int n;
-  vc psi;
+std::tuple<vi, vi, vc> get_rough_topK_Amat(int n, const vc& _psi,
+                                           const bool is_dual_mode) {
+  // Roughly estimate the following problem
+  // max_{phi \in S_n} |<phi|psi>|^2
+  // We only consider the case of k=n and k=n-1.
 
-  try {
-    cnpy::NpyArray psi_npy = cnpy::npz_load("temp_in.npz")["psi"];
-    for (n = 0; n <= 15; n++)
-      if (int(psi_npy.shape[0]) == (1 << n)) break;
-    if (int(psi_npy.shape[0]) != (1 << n))
-      throw std::runtime_error("Invalid input shape");
-    psi.resize(1 << n);
-    for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
-  } catch (const std::exception& e) {
-    debug("Error: ", e.what());
-    n = 14;
-    psi.resize(1 << n);
-    std::mt19937 mt(1);
-    for (int i = 0; i < 1 << n; i++)
-      psi[i] = COMPLEX(std::uniform_real_distribution<double>(-0.5, 0.5)(mt),
-                       std::uniform_real_distribution<double>(-0.5, 0.5)(mt));
-  }
+  vc psi = _psi;
+  for (int i = 0; i < (1 << n); i++) psi[i] = std::conj(psi[i]);
 
   const int MAX_THREAD_NUM = omp_get_max_threads();
-  double final_ans = 0;
+  vec<Info> good_kQcRt;
 
+  // 1. Search for the case k=n
 #pragma omp parallel for num_threads(MAX_THREAD_NUM)
   for (int i = 0; i < MAX_THREAD_NUM; i++) {
-    double ans = fast(n, psi);
+    vec<Info> ans = hill_climbing(n, psi, is_dual_mode);
 #pragma omp critical
-    final_ans = std::max(final_ans, ans);
+    good_kQcRt.insert(good_kQcRt.end(), std::make_move_iterator(ans.begin()),
+                      std::make_move_iterator(ans.end()));
   }
-  debug(final_ans);
+  std::sort(ALL(good_kQcRt), std::greater<>());
+  good_kQcRt.erase(std::unique(ALL(good_kQcRt),
+                               [](const Info& a, const Info& b) {
+                                 return std::get<2>(a) == std::get<2>(b) &&
+                                        std::get<3>(a) == std::get<3>(b);
+                               }),
+                   good_kQcRt.end());
+  if (!good_kQcRt.empty())
+    std::cerr << "Case k=n done | current max: " << std::get<0>(good_kQcRt.front())
+              << std::endl;
 
+  // 2. Search for the case k=n-1
   RREF_generator rref_gen(n, n - 1);
-  debug(rref_gen.q_binom);
-
-  vec<std::pair<double, vc>> t2_psi_pairs;
-#pragma omp parallel for schedule(dynamic) num_threads(omp_get_max_threads())
+  vec<std::tuple<double, vi, int>> good_Rt;
+#pragma omp parallel for schedule(dynamic) num_threads(MAX_THREAD_NUM)
   for (int rref_idx = 0; rref_idx < rref_gen.q_binom; rref_idx++) {
     const auto& [row_idxs, t_mask] = rref_gen.get(rref_idx, false);
     assert(__builtin_popcount(t_mask) == 1);
     for (int t : {0, t_mask}) {
       vc psi2 = arange_psi_by_t(n - 1, t, row_idxs, psi);
-      double t2 = calc_threshold_2(n - 1, psi2.begin());
-      // This t2 is not normalized and not root
+      double t1 = calc_threshold_1(n - 1, psi2.begin());  // not normalized
 #pragma omp critical
-      t2_psi_pairs.emplace_back(t2, psi2);
-    }
-    if (rref_idx % 1000 == 0) {
-      std::cerr << "progress: " << rref_idx << "/" << rref_gen.q_binom << std::endl;
+      {
+        good_Rt.emplace_back(t1, row_idxs, t);
+        if (good_Rt.size() > 20) truncate_goods(good_Rt, 10, false);
+        if (t == 0 && rref_idx % (rref_gen.q_binom / 10) == 0)
+          std::cerr << "progress: " << rref_idx << "/" << rref_gen.q_binom << std::endl;
+      }
     }
   }
-  std::cerr << "RREF(n,n-1) enumeration done" << std::endl;
+  truncate_goods(good_Rt, 10, false);
+  std::cerr << "progress: " << rref_gen.q_binom << "/" << rref_gen.q_binom << std::endl;
 
-  std::sort(ALL(t2_psi_pairs),
-            [](const auto& a, const auto& b) { return a.first > b.first; });
-  if (int(t2_psi_pairs.size()) > 10) t2_psi_pairs.resize(10);
-
-  for (const auto& [t2, psi2] : t2_psi_pairs) {
-    double ans = fast(n - 1, psi2);
-    debug(ans);
-    final_ans = std::max(final_ans, ans);
+#pragma omp parallel for num_threads(MAX_THREAD_NUM)
+  for (const auto& [_, row_idxs, t] : good_Rt) {
+    vc psi2 = arange_psi_by_t(n - 1, t, row_idxs, psi);
+    vec<Info> ans = hill_climbing(n - 1, psi2, is_dual_mode);
+    for (auto& info : ans) {
+      std::get<4>(info) = row_idxs;
+      std::get<5>(info) = t;
+    }
+    if (ans.empty()) continue;
+#pragma omp critical
+    {
+      std::cerr << "Case k=n-1 | current max:" << std::get<0>(ans.front()) << std::endl;
+      good_kQcRt.insert(good_kQcRt.end(), std::make_move_iterator(ans.begin()),
+                        std::make_move_iterator(ans.end()));
+    }
   }
 
-  std::cout << final_ans << std::endl;
+  // 3. from kQcRt to A matrix
+  //   indptr, indices, data
+  if (good_kQcRt.empty()) {
+    std::cerr << "No good kQcRt found" << std::endl;
+    return {vi{-1}, vi{-1}, vc{-1}};
+  }
+
+  std::tuple<vi, vi, vc> ret = {vi(), vi(), vc()};
+  std::get<0>(ret).push_back(0);
+  for (const auto& [_, k, Q, c, row_idxs, t] : good_kQcRt) {
+    auto [indices, values] = make_col_from_QcRt(k, Q, c, row_idxs, t);
+    std::get<0>(ret).push_back(std::get<0>(ret).back() + (1 << k));
+    std::get<1>(ret).insert(std::get<1>(ret).end(), ALL(indices));
+    std::get<2>(ret).insert(std::get<2>(ret).end(), ALL(values));
+  }
+  std::cerr << "A matrix construction done" << std::endl;
+
+  return ret;
+}
+
+int main() {
+  int n;
+  vc psi;
+  bool is_dual_mode;
+
+  try {
+    cnpy::NpyArray psi_npy = cnpy::npz_load("temp_in.npz")["psi"];
+    for (n = 5; n <= 15; n++)
+      if (int(psi_npy.shape[0]) == (1 << n)) break;
+    if (int(psi_npy.shape[0]) != (1 << n))
+      throw std::runtime_error("Invalid input shape");
+    psi.resize(1 << n);
+    for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
+    is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
+  } catch (const std::exception& e) {
+    debug("Error: ", e.what());
+    n = 5;
+    psi.resize(1 << n);
+    std::mt19937 mt(1);
+    for (int i = 0; i < 1 << n; i++)
+      psi[i] = COMPLEX(std::uniform_real_distribution<double>(-0.5, 0.5)(mt),
+                       std::uniform_real_distribution<double>(-0.5, 0.5)(mt));
+    is_dual_mode = false;
+  }
+
+  auto rough_topK_Amat = get_rough_topK_Amat(n, psi, is_dual_mode);
+
+  auto [indptr, indices, data] = rough_topK_Amat;
+  debug(indptr.size());
+  cnpy::npz_save("temp_out.npz", "indptr", indptr.data(), {indptr.size()}, "w");
+  cnpy::npz_save("temp_out.npz", "indices", indices.data(), {indices.size()}, "a");
+  cnpy::npz_save("temp_out.npz", "data", data.data(), {data.size()}, "a");
 
   return 0;
 }
