@@ -1,3 +1,3 @@
 # todo
 
-calc_dotでthresholdの更新をもっと頻繁に?
+* [ ] make TL of the rough.cpp more large
