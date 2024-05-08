@@ -164,19 +164,19 @@ we can obtain more tight bound by
   \leq \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} i^{c_x} P_x} }
 \end{equation}
 where $c_x \in \qty{0, 1, 2, 3}$ is the independent variable for each $x$.
-Let $\calP \defeq \sum_{x=0}^{2^n-1} i^{c_x^*} P_x$ be
+Let $P^* = \sum_{x=0}^{2^n-1} i^{c_x^*} P_x$ be
 the one of optimal solutions for the problem~\eqref{eq:branchCutNewProblemDefinition}.
 Then, without loss of generality,
-we can assume that $\frac{\pi}{2} \leq \arg \calP < \frac{3\pi}{2}$,
+we can assume that $\frac{\pi}{2} \leq \arg P^* < \frac{3\pi}{2}$,
 and by sorting and multiplying $i,-1$ or $-i$ to $P_x$ appropriately,
 we can also assume that
 \begin{equation}\label{eq:branchCutArgOrder}
   0 \leq \arg{(P_0)} \leq \arg{(P_1)} \leq \dots \leq \arg{(P_{2^n-1})} < \pi/2.
 \end{equation}
-If all $c_x$ satisfies $\arg{(\calP)} - \pi/4 \leq \arg{\qty(i^{c_x} P_x)} < \arg{(\calP)} + \pi/4$,
-then $c_x$ is optimal for $\calP$.
+If all $c_x$ satisfies $\arg{(P^*)} - \pi/4 \leq \arg{\qty(i^{c_x} P_x)} < \arg{(P^*)} + \pi/4$,
+then $c_x$ is optimal for $P^*$.
 Therefore, we can justify the following Algorithm \ref{alg:branchCut}
-by moving $\arg(\calP)$ in the range of $[\pi/2, 3\pi/2)$.
+by moving $\arg(P^*)$ in the range of $[\pi/2, 3\pi/2)$.
 Also refer to the figure~\ref{fig:argsort} for the visualization of this algorithm.
 The time complexity of this algorithm is $O(n2^n)$
 due to the sorting of $2^n$ elements.
