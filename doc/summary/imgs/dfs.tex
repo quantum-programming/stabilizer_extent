@@ -43,7 +43,7 @@
     ]
     \foreach \i/\bit in {0/00,1/01,2/10,3/11}{
     \renewcommand{\baselinestretch}{1.5}
-    \draw[myBlock1](0,-3/4*\i) rectangle (1,-3/4*\i-0.75) node[myNode] {$+b_{\bit}$};
+    \draw[myBlock1](0,-3/4*\i) rectangle (1,-3/4*\i-0.75) node[myNode] {$+P_{\bit}$};
     \renewcommand{\baselinestretch}{1.0}
     }
 
@@ -54,8 +54,8 @@
             16/+/+/-i/+i/1/1/1/1.20/\black
         }{
             \renewcommand{\baselinestretch}{1.5}
-            \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a b_{00}$\\$\c b_{10}$};
-            \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b b_{01}$\\$\d b_{11}$};
+            \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a P_{00}$\\$\c P_{10}$};
+            \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b P_{01}$\\$\d P_{11}$};
             \renewcommand{\baselinestretch}{1.0}
             \node[anchor=north west] at (\pos+1.2,-4) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
             \node[anchor=north west] at (\pos+1.2,-5) {$Q=\mqty[\y&\z\\&?]$};
@@ -78,7 +78,7 @@
         }{
             \renewcommand{\baselinestretch}{1.5}
             \draw[myBlock3] (\x,-8) rectangle (\x+1,-11)
-            node[myNode] {$\a b_{00}$\\$\c b_{10}$\\$\b b_{01}$\\$\d b_{11}$};
+            node[myNode] {$\a P_{00}$\\$\c P_{10}$\\$\b P_{01}$\\$\d P_{11}$};
             \renewcommand{\baselinestretch}{1.0}
             \node[font=\large] at (\x+0.5,-11.5) {$\i$};
         }
@@ -114,11 +114,11 @@
 
     \node[font=\LARGE,align=left] at (7,-1.5) {
         Define:\\
-        $n=k=2, R=I_n, t=0, b_{x} \defeq \braket{x}{\psi}$
+        $n=k=2, R=I_n, t=0 \vphantom{{\displaystyle \sum_{x=0}^{2^n-1}}}$
     };
-    \node[font=\LARGE,align=left] at (15,-1.5) {
+    \node[font=\LARGE,align=left] at (13,-1.5) {
     Evaluate: \\
-    $\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} b_x$
+    ${\displaystyle \sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x}$
     };
 
 \end{tikzpicture}

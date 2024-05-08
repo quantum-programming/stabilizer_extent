@@ -35,6 +35,22 @@
                 "ptex2pdf",
                 "ptex2pdf"
             ]
+        },
+        {
+            "name": "uplatex",
+            "tools": [
+                "ptex2pdf (uplatex)",
+                "ptex2pdf (uplatex)",
+            ]
+        },
+        {
+            "name": "uplatex&pbibtex",
+            "tools": [
+                "ptex2pdf (uplatex)",
+                "pbibtex (uplatex)",
+                "ptex2pdf (uplatex)",
+                "ptex2pdf (uplatex)"
+            ]
         }
     ],
     "cSpell.words": [
