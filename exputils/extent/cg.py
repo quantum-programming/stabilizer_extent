@@ -6,13 +6,14 @@ from exputils.dot.get_rough_Amat import get_rough_Amat
 
 
 def calculate_extent_CG(
-    n: int, psi: np.ndarray, method: str = "mosek", Amat_method="topK"
+    n: int, psi: np.ndarray, method: str = "mosek", Amat_method="topK", verbose=False
 ) -> tuple:
     assert Amat_method in ["topK", "rough"]
-    print(f"CG: {n=}, {method=}")
-    print("start: calculate dots")
+    if verbose:
+        print(f"CG: {n=}, {method=}")
+        print("start: calculate dots")
     get_Amat = get_topK_Amat if Amat_method == "topK" else get_rough_Amat
-    current_Amat = get_Amat(n, psi, False)
+    current_Amat = get_Amat(n, psi, is_dual_mode=False, verbose=verbose)
     iter_max = 100
     eps = 1e-8
     discard_current_threshold = 0.8
@@ -20,23 +21,31 @@ def calculate_extent_CG(
     extends = []
     max_values = []
     for it in range(iter_max):
-        print(f"iteration: {it + 1} / {iter_max}, Amat.shape = {current_Amat.shape}")
-        print("start: solve SOCP")
+        if verbose:
+            print(
+                f"iteration: {it + 1} / {iter_max}, Amat.shape = {current_Amat.shape}"
+            )
+            print("start: solve SOCP")
         stabilizer_extent, coeff, dual = calculate_extent_custom(
-            n, current_Amat, psi, method, verbose=True
+            n, current_Amat, psi, method, verbose=verbose
         )
         extends.append(stabilizer_extent)
-        print(f"{stabilizer_extent=}")
-        print("start: calculate dual dots")
-        dual_dots_state = get_Amat(n, dual, True)
+        if verbose:
+            print(f"{stabilizer_extent=}")
+            print("start: calculate dual dots")
+        dual_dots_state = get_Amat(n, dual, True, verbose=verbose)
+        if dual_dots_state.shape[1] == 0:
+            if verbose:
+                print("OPTIMAL!")
+            break
+        assert np.all(np.count_nonzero(dual_dots_state.toarray(), axis=0) > 0)
+
         dual_dots = np.abs(dual.conj().T @ dual_dots_state)
         dual_violated_indices = dual_dots > 1 + eps
         violated_count = np.sum(dual_violated_indices)
         max_values.append(max(1.0, np.max(dual_dots) if len(dual_dots) > 0 else 0))
-        print(
-            f"# of violations: {violated_count}"
-            + ("+ more" if violated_count == 5000 else "")
-        )
+        if verbose:
+            print(f"# of violations(LB): {violated_count}")
 
         # restrict current Amat
         nonbasic_indices = np.abs(coeff) > eps
@@ -45,18 +54,22 @@ def calculate_extent_CG(
         )
         remain_indices = np.logical_or(nonbasic_indices, critical_indices)
         current_Amat = current_Amat[:, remain_indices]
-
         if violated_count == 0:
-            print("OPTIMAL!")
+            # this could happen if 1 < max(dual_dots) < 1+eps
+            if verbose:
+                print("OPTIMAL!")
             break
+
         extra_size = min(violation_max, violated_count)
         extra_Amat = dual_dots_state[
             :, np.argpartition(dual_dots, -extra_size)[-extra_size:]
         ]
-        print(f"{current_Amat.shape=}, {extra_Amat.shape=}")
+
+        if verbose:
+            print(f"{current_Amat.shape=}, {extra_Amat.shape=}")
         current_Amat = scipy.sparse.hstack([current_Amat, extra_Amat])
 
-    return stabilizer_extent, extends, max_values
+    return stabilizer_extent, extends, max_values, dual
 
 
 def test_calculate_extent_CG():

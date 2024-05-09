@@ -58,6 +58,7 @@ def recovery_states_from_idxs(n: int, idxs: List[int]) -> csc_matrix:
                     return csc_matrix(
                         (csc_data, csc_indices, csc_indptr),
                         shape=(1 << n, len(csc_indptr) - 1),
+                        dtype=np.complex128,
                     )
                 idx = idxs[-1]
         else:
@@ -82,6 +83,7 @@ def recovery_states_from_idxs(n: int, idxs: List[int]) -> csc_matrix:
                             return csc_matrix(
                                 (csc_data, csc_indices, csc_indptr),
                                 shape=(1 << n, len(csc_indptr) - 1),
+                                dtype=np.complex128,
                             )
                         idx = idxs[-1]
                     t = (t + ~t_mask + 1) & t_mask

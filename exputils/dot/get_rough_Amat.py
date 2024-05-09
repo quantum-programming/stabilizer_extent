@@ -7,12 +7,13 @@ from exputils.dot.get_topK_Amat import get_topK_Amat
 from scipy.sparse import csc_matrix
 
 
-def get_rough_Amat(n: int, psi: np.ndarray, is_dual_mode: bool = False) -> csc_matrix:
+def get_rough_Amat(
+    n: int, psi: np.ndarray, is_dual_mode: bool, verbose: bool
+) -> csc_matrix:
     assert type(psi) == np.ndarray and psi.dtype == np.complex128
     assert psi.shape == (2**n,)
     np.savez("temp_in.npz", psi=psi, is_dual_mode=is_dual_mode)
 
-    verbose = False
     path = pathlib.Path(__file__).parent.parent / "cpp/rough_dot.exe"
     with subprocess.Popen([path], stderr=subprocess.PIPE) as p:
         if verbose:
@@ -30,9 +31,11 @@ def get_rough_Amat(n: int, psi: np.ndarray, is_dual_mode: bool = False) -> csc_m
     os.remove("temp_out.npz")
 
     if indptr.size > 1 or indptr[0] != -1:
-        return csc_matrix((data, indices, indptr), shape=(2**n, len(indptr) - 1))
+        return csc_matrix(
+            (data, indices, indptr), shape=(2**n, len(indptr) - 1), dtype=np.complex128
+        )
     else:
-        return csc_matrix((2**n, 0))
+        return csc_matrix((2**n, 0), dtype=np.complex128)
 
 
 if __name__ == "__main__":
