@@ -57,9 +57,9 @@
             \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a P_{00}$\\$\c P_{10}$};
             \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b P_{01}$\\$\d P_{11}$};
             \renewcommand{\baselinestretch}{1.0}
-            \node[anchor=north west] at (\pos+1.2,-4) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
-            \node[anchor=north west] at (\pos+1.2,-5) {$Q=\mqty[\y&\z\\&?]$};
-            \node[anchor=north west] at (\pos+1.2,-6.5) {threshold$ \leq \thresColor{\thres}$};
+            \node[anchor=north west,scale=1.2] at (\pos+1.1,-3.7) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
+            \node[anchor=north west,scale=1.2] at (\pos+1.1,-4.9) {$Q=\mqty[\y&\z\\&?]$};
+            \node[anchor=north west] at (\pos+1.1,-6.3) {(upper bound)\\\large{$\leq \thresColor{\thres}$}};
         }
 
     \foreach \i/\x/\a/\b/\c/\d in {
@@ -80,7 +80,7 @@
             \draw[myBlock3] (\x,-8) rectangle (\x+1,-11)
             node[myNode] {$\a P_{00}$\\$\c P_{10}$\\$\b P_{01}$\\$\d P_{11}$};
             \renewcommand{\baselinestretch}{1.0}
-            \node[font=\large] at (\x+0.5,-11.5) {$\i$};
+            % \node[font=\large] at (\x+0.5,-11.5) {$\i$};
         }
 
     \newcommand{\Arrows}[3]{
@@ -103,22 +103,22 @@
 
     \draw[ultra thick,red] (11,-7.1) -- (15,-7.9);
     \draw[ultra thick,red] (11,-7.9) -- (15,-7.1);
-    \node[align=center,red] at (13,-9.5) {\LARGE{Branch Cut}\\(skip this subtree)};
+    \node[align=center,red] at (13,-9.5) {\LARGE{Branch Cut}\\\large{(skip this subtree)}};
 
     \node[anchor=center,font=\LARGE] at (10,-5.5) {$\cdots$};
     \node[anchor=center,font=\LARGE] at (10,-9.5) {$\cdots$};
 
-    \node[font=\LARGE,cA] at (-1,-1.5) {$2^2$};
-    \node[font=\LARGE,cB] at (-1,-5.5) {$2^1$};
-    \node[font=\LARGE,cC] at (-1,-9.5) {$2^0$};
+    \node[font=\LARGE,cA,scale=1.2] at (-0.8,-1.5) {$2^2$};
+    \node[font=\LARGE,cB,scale=1.2] at (-0.8,-5.5) {$2^1$};
+    \node[font=\LARGE,cC,scale=1.2] at (-0.8,-9.5) {$2^0$};
 
-    \node[font=\LARGE,align=left] at (7,-1.5) {
-        Define:\\
+    \node[font=\LARGE,align=left] at (6,-1.5) {
+        Define:\\[1em]
         $n=k=2, R=I_n, t=0 \vphantom{{\displaystyle \sum_{x=0}^{2^n-1}}}$
     };
-    \node[font=\LARGE,align=left] at (13,-1.5) {
-    Evaluate: \\
-    ${\displaystyle \sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x}$
+    \node[font=\LARGE,align=left] at (13.5,-1.5) {
+    Evaluate: \\[1em]
+    ${\displaystyle \abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x}}$
     };
 
 \end{tikzpicture}

@@ -172,8 +172,9 @@
 
 \section{Preliminaries}
 
-We denote the entire set of $n$-qubit
-stabilizer states as $\calS_n \defeq \qty{\ket{\phi_\alpha}}$.
+Let $\calS_n \defeq \qty{\ket{\phi_\alpha}}$
+be the entire set of $n$-qubit
+stabilizer states.
 We also define the density matrix for $\ket{\phi_\alpha}$ as
 $\sigma_\alpha \defeq \ketbra{\phi_\alpha}{\phi_\alpha}$.
 The size of $\calS_n$
@@ -187,9 +188,8 @@ See also Table~\ref{table:sizeOfCalSn} for the size of $\calS_n$.
     The size of $\calS_n$,
     the data size of $A_n$ in sparse matrix
     format~\cite{scipyScipySparseCsc_matrix},
-    and the data size of a matrix we used
-    in the first step of Algorithm~\ref{alg:CG}
-    for each $n$.
+    and the average time to quantify
+    10 Haar random pure state with our proposed algorithm.
   }
   \label{table:sizeOfCalSn}
   \centering
@@ -199,32 +199,31 @@ See also Table~\ref{table:sizeOfCalSn} for the size of $\calS_n$.
     \midrule
     $|\calS_n|$            & 2.42e+06             & 3.15e+08              & 8.13e+10               & 4.18e+13             & 4.29e+16               & 8.79e+19             \\
     \orange{size of $A_n$} & \SI{2.3}{\kibi\byte} & \SI{25.9}{\kibi\byte} & \SI{367.2}{\kibi\byte} & \SI{6.2}{\mebi\byte} & \SI{128.0}{\mebi\byte} & \SI{3.1}{\gibi\byte} \\
-    \orange{proposed}      & \SI{2.3}{\kibi\byte} & \SI{25.9}{\kibi\byte} & \SI{367.2}{\kibi\byte} & \SI{6.2}{\mebi\byte} & \SI{128.0}{\mebi\byte} & \SI{3.1}{\gibi\byte} \\
+    \orange{proposed}      & \SI{1}{\second}      & \SI{10}{\second}      & \SI{1}{\minute}        & \SI{10}{\minute}     & (Approx)               & (Approx)             \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 
-The \textit{Robustness of Magic} is
+The \textit{Robustness of Magic} (RoM) is
 introduced in~\cite{PhysRevLett.118.090501}
-to quantify a $n$-qubit state $\rho$,
-expressed as density matrix,
+to quantify an $n$-qubit state $\rho$,
+represented by density matrix,
 and defined as follows:
 \begin{equation*}
   \calR(\rho) \defeq \min_{c \in \bbR^{\abs{\calS_n}}}
-  \left\{ \norm{c}_1 \relmiddle| \rho = \sum_{\alpha=1}^{\abs{\calS_n}} c_\alpha \sigma_\alpha \right\}
+  \left\{ \norm{c}_1 \relmiddle| \rho = \sum_{j=1}^{\abs{\calS_n}} c_j \sigma_j \right\}
 \end{equation*}
-
-The \textit{stabilizer extent} is
+On the other hand, the \textit{stabilizer extent} is
 introduced in~\cite[Definition 3]{Bravyi2019simulationofquantum}
-to quantify a normalized $n$-qubit state $\psi$,
-expressed as state vector,
+to quantify an normalized $n$-qubit state $\psi$,
+represented by state vector,
 and is defined as follows:
 \begin{equation}\label{eq:stabilizerExtentPrimalOrig}
   \xi(\psi) \defeq \min_{c\in \bbC^{\abs{\calS_n}}}
-  \left\{ \norm{c}_1^2 \relmiddle| \ket{\psi} = \sum_{\alpha=1}^{\abs{\calS_n}} c_\alpha \ket{\phi_\alpha} \right\}
+  \left\{ \norm{c}_1^2 \relmiddle| \ket{\psi} = \sum_{j=1}^{\abs{\calS_n}} c_j \ket{\phi_j} \right\}
 \end{equation}
-In this paper, we focus on the calculation of the stabilizer extent.
+In this paper,  our focus lies on computing the stabilizer extent.
 This definition of the stabilizer extent
 can be simplified as
 complex $L^1$-norm minimization problem:
@@ -253,7 +252,7 @@ the Lagrange dual problem
 corresponding to \eqref{eq:stabilizerExtentPrimal}
 is not $\Re(b^\dagger y)$ but $-\Re(b^\dagger y)$,
 we flipped the sign for simplicity.
-This is valid as it done not alter the optimal solution,
+This is valid as it does not alter the optimal solution,
 owing to $\abs{a_j^\dagger y} = \abs{a_j^\dagger (-y)}$.
 
 Further, in order to describe our algorithm in later sections,
@@ -261,7 +260,7 @@ we denote a function $\text{SolveSOCP}(\calC, b)$
 which takes a columns set $\calC \subseteq \calA$
 and a vector $b$,
 and returns the optimal primal solution $x$
-dual optimal solution $\bm{y}$ of
+dual optimal solution $y$ of
 the SOCP problem~\eqref{eq:stabilizerExtentDual}.
 In actual numerical computation,
 this function can be realized by just solving
@@ -276,10 +275,11 @@ Despite both being efficiently quantifiable through
 convex optimization problems, solving them directly
 for $n>5$ qubit systems becomes impractical
 due to the superexponential growth
-of stabilizer states $\abs{\calS_n}$.
+of the number of stabilizer states $\abs{\calS_n}$.
 To address this challenge,
 we proposed employing the classical optimization
-technique known as column generation (CG) method
+technique known as column generation (CG)
+method~\cite{desaulniersColumnGeneration2005}
 for Robustness of Magic calculation~\cite{hamaguchiHandbookEfficientlyQuantifying2023}.
 However, it remained unclear whether the same approach
 could be applied to calculate the stabilizer extent.
@@ -326,7 +326,7 @@ the stabilizer states have a simple form as shown in the following proposition.
       \ket{\phi} \defeq \frac{1}{2^{k/2}} \sum_{x=0}^{2^k-1}(-1)^{x^\top Q x} i^{c^\top x}\ket{R x+t} & \text{if $k>0$}
     \end{dcases}
   \end{equation}
-  where $Q \in \bbF_2^{k \times k}$, $c \in \bbF_2^k$, $R \in \bbF_2^{k \times (n-k)}$, $t \in \bbF_2^{n-k}$
+  where $Q \in \bbF_2^{k \times k}$, $c \in \bbF_2^k$, $R \in \bbF_2^{n \times k}$, $t \in \bbF_2^{n}$
   and $\Rank{R} = k$.
   Also, any state that can be written in this form is a stabilizer state.
 \end{proposition}
@@ -340,20 +340,18 @@ The proof is given in Appendix~\ref{sec:efficientEnumeration}.
   under the following conditions
   enumerates all stabilizer states
   without any duplication or omission.
-  \begin{quote}
-    \begin{itemize}
-      \item $Q$ is a upper triangular $\bbF_2^{k \times k}$ matrix.
-      \item $R$ is a $\rank{k}$ $\bbF_2^{k \times (n-k)}$ rref (reduced row echelon form) matrix.
-      \item $t$ belongs to the complement of the row space of $R$.
-    \end{itemize}
-  \end{quote}
+  \begin{itemize}
+    \item $Q$ is a upper triangular $\bbF_2^{k \times k}$ matrix.
+    \item $R$ is a $\bbF_2^{n \times k}$ rref (reduced row echelon form) matrix satisfies $\Rank{R}=k$.
+    \item $t$ belongs to the complement of the row space of $R$.
+  \end{itemize}
 \end{restatable}
 
 Let $\phi$ be a one of stabilizer state
 in the standard form~\eqref{eq:stabilizerStateStandardForm}
 with $k>0$, which means
 $\ket{\phi} = \frac{1}{2^{k/2}}\sum_{x=0}^{2^k-1} (-1)^{x^\top Q x} i^{c^\top x} \ket{Rx+t}$.
-Then, by denoting $a \in \bbC^{2^n}$ as the corresponding column in $A_n$ of $\phi$,
+Then, by denoting $a \in \calA$ as the corresponding vector of $\phi$,
 the overlap between $a$ and $b$ is
 \begin{equation*}
   a^\dagger b
@@ -371,12 +369,12 @@ this is basically equivalent to the following problem:
 \begin{equation}\label{eq:overlapProblem}
   \max_{c\in \bbF_2^{n},Q\in \bbF_2^{n \times n}} \qty{ \abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x} }.
 \end{equation}
-If we solve this naively,
+If we solve~\eqref{eq:overlapProblem} naively,
 the time complexity is $\order{2^{n+n(n+1)/2} 2^n n^2}$,
 where $2^{n+n(n+1)/2}$ is the number of the possible $c,Q$,
 $2^n$ is the number of term in the sum,
 and $n^2$ is the computational cost per each term.
-However, we can reduce the time complexity drastically
+However, we can reduce this time complexity
 by using the following theorem.
 \begin{restatable}{theorem}{overlapProblem}
   \label{thm:overlapProblem}
@@ -388,7 +386,7 @@ is the depth-first search (DFS) algorithm,
 which is describe in Figure~\ref{fig:dfs}.
 The detailed proof is given in Appendix~\ref{sec:dfs}.
 Consequently, the next theorem is obtained.
-\begin{theorem}{Complexity of computing all stabilizer overlaps}
+\begin{restatable}{theorem}{complexityStabilizerOverlap}
   \label{thm:complexityStabilizerOverlap}
   Computation of $A_n^\dagger b$
   can be done in time complexity of
@@ -396,25 +394,37 @@ Consequently, the next theorem is obtained.
   space complexity of $\order{2^n}$.
   Thus, we can compute the fidelity
   in the same complexity.
-\end{theorem}
+\end{restatable}
 As a remark,
 the fidelity a random 8-qubit pure state can be computed
-in \orange{??} seconds with a \textit{laptop} powered by Intel(R)
-Core(TM) i7-10510U CPU with 16 GB RAM,
-which is fastened
-thanks to branch cut in the dfs algorithm.
-
+in \orange{??} minutes with a \textit{laptop} powered by Intel(R)
+Core(TM) i7-10510U CPU with 16 GB RAM.
+It's worth noting that the algorithm's speed
+is enhanced by branch cutting within
+the DFS algorithm,
+as detailed in Appendix~\ref{sec:branchCut}.
+We will use this algorithm as a subroutine
+in the later sections.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{imgs/dfs.pdf}
   \caption{
-    The visualization of the DFS algorithm
+    Visualization of the DFS algorithm
     for Theorem~\ref{thm:overlapProblem}.
-    The DFS algorithm is a recursive algorithm
-    that calculates the overlap.
-    The memory needed is limited
+    The DFS algorithm is a recursive procedure
+    to calculates the overlap.
+    Memory usage is limited
     to only $\sum_{i=0}^{n} 2^n$.
-    Detailed explanation is given in Appendix~\ref{sec:dfs}.
+    During computation,
+    the maximal solution is either
+    lower bounded
+    by the current best solution
+    or, in certain cases, 1.
+    Thus,
+    we can terminate branches
+    if the upper bound of the current branch
+    is inferior to the current best solution.
+    Also refer to Appendix~\ref{sec:branchCut}.
   }
   \label{fig:dfs}
 \end{figure}
@@ -428,13 +438,13 @@ thanks to branch cut in the dfs algorithm.
   $\calC_0 \gets \text{Partial set of $\calA_n$}$
   \Comment*[r]{Initialize using top overlap $\abs{a_j^\dagger b}$}
   \For{$k = 0, 1, 2, \ldots$} {
-    $\bm{x}_k, \bm{y}_k \gets \SolveSOCP(\calC_k, \bm{b})$\\
-    $\calC'_k \gets \qty{\bm{a} \in \calA_n \relmiddle| \abs{\bm{a}^\dagger \bm{y_k}} > 1}$
+    $x_k, y_k \gets \SolveSOCP(\calC_k, \bm{b})$\\
+    $\calC' \gets \qty{a \in \calA_n \relmiddle| \abs{a^\dagger y_k} > 1}$
     \Comment*[r]{Use of subroutine in Section~\ref{sec:coreSubroutine}}
-    \If {$\calC'_k = \emptyset$} {
-      \Return $\xi(\psi) = \norm{\bm{x}_k}_1$
+    \If {$\calC' = \emptyset$} {
+      \Return $\xi(\psi) = \norm{x_k}_1$
     }
-    $\calC_{k+1} \gets \calC_{k+1} \cup \calC'_k$
+    $\calC_{k+1} \gets \calC_{k} \cup \calC'$
   }
   \caption{Exact stabilizer extent calculation by Column Generation}
   \label{alg:CG}
@@ -509,7 +519,8 @@ and outperforms randomly selected $\calC_0$.
 The terminate criterion for Algorithm~\ref{alg:CG}
 is the absence of columns that violate
 the dual constraints $\abs{a_j^\dagger y_k} \leq 1$,
-which is checked by the subroutine in Section~\ref{sec:coreSubroutine}.
+which can be checked efficiently
+by Theorem~\ref{thm:complexityStabilizerOverlap} as well.
 This means the optimal solution for the
 dual problem~\eqref{eq:stabilizerExtentDual}
 is found, and the primal solution $x_k$ is also optimal
@@ -520,8 +531,8 @@ find the exact stabilizer extent
 for any $n$-qubit state $\ket{\psi}$
 once it terminates.
 The convergence of the CG method
-is also confirmed in the numerical experiments.
-For the same 8-qubit state,
+is also confirmed in numerical experiments.
+For the same 8-qubit state as in the initialization,
 $\max_{a_j \in \calA} \abs{a_j^\dagger y_k}$
 reaches 1.00 after 10 iterations,
 indicating the discovery of the optimal solution.
@@ -550,7 +561,7 @@ indicating the discovery of the optimal solution.
 \end{figure}
 
 In some cases, the state $\ket{\psi}$ could be real.
-For example, \orange{...} .
+For example, \orange{todo} .
 We show that in such cases the problem can be further simplified.
 We define the subset of the states in $\calS_n$ with real coefficients as $\calT_n$,
 and the corresponding subset of the columns in $\calA_n$ as $\calA'_n$.
@@ -607,17 +618,22 @@ We would like to thank \orange{N. Marumo} for valuable comments on the manuscrip
 
 \section{Fast Algorithm for Overlap}
 
-In this section, we will explain the algorithm in detail
+In this section, we will explain the detail of
+dfs algorithm in Section~\ref{sec:coreSubroutine}
 and introduce some heuristics to improve the efficiency.
 
 \subsection{Efficient Enumeration of Stabilizer States}
 \label{sec:efficientEnumeration}
 
-In this section, we prove Theorem~\ref{thm:stabilizerStatesStandardForm}.
+In this section, we prove the Theorem~\ref{thm:stabilizerStatesStandardForm}.
 \stabilizerStatesStandardForm*
 \begin{proof}
   Main Ideas come from \cite{struchalinExperimentalEstimationQuantum2021b}.
-  Define $f: (Q,c,R,t) \mapsto \ket{\phi}$ as the mapping from $(Q,c,R,t)$ to the corresponding state $\ket{\phi}$.
+  The assertion is trivial for $k=0$.
+  We will only consider the case $k>0$.
+  Define $f: (Q,c,R,t) \mapsto \ket{\phi}$
+  as the mapping from $(Q,c,R,t)$ to
+  the corresponding state $\ket{\phi}$.
   Firstly, we show that $f$ is injective.
   We can say that
   \begin{align*}
@@ -632,17 +648,19 @@ In this section, we prove Theorem~\ref{thm:stabilizerStatesStandardForm}.
 
   Next, we show that $f$ is surjective.
   Since $f$ is injective, we only have to show
-  that the cardinality of the domain is equal to that of the codomain, i.e., $\abs{\calS_n}$.
-  It is known that the number of $\rank k$ $\bbF_2^{k \times (n-k)}$ rref matrices is
-  $\qBinom{n}{k}_2$, which is a q-binomial coefficient with $q=2$.
+  that the cardinality of the domain is equal to that of the codomain,
+  i.e., $-2^n+\abs{\calS_n}$.
+  It is known that the number of $\bbF_2^{n \times k}$ rref matrices
+  with $\Rank{R}=k$ is $\qBinom{n}{k}_2$,
+  which is a q-binomial coefficient with $q=2$.
   Therefore, the number of $Q,c,R,t$ is
   $2^{k(k+1)/2},2^k,\qBinom{n}{k}_2,2^{n-k}$, respectively,
   and the total number of states is
   \begin{equation*}
-    2^n + \sum_{k=1}^{n} 2^{k(k+1)/2} 2^k \qBinom{n}{k}_2 2^{n-k} \\
-    = 2^n \sum_{k=0}^{n} \qBinom{n}{k}_2 2^{k(k+1)/2}               \\
-    = 2^n \prod_{k=1}^{n} (2^k+1)
-    = \abs{\calS_n}.
+    \sum_{k=1}^{n} 2^{k(k+1)/2} 2^k \qBinom{n}{k}_2 2^{n-k} \\
+    = -2^n + 2^n \sum_{k=0}^{n} \qBinom{n}{k}_2 2^{k(k+1)/2}               \\
+    = -2^n + 2^n \prod_{k=1}^{n} (2^k+1)
+    = -2^n + \abs{\calS_n}.
   \end{equation*}
   In the second last equation, we used the q-binomial theorem.
   Therefore, the mapping is surjective, which concludes the proof.
@@ -672,7 +690,7 @@ Hence, the subsequent corollary is valuable.
     \end{dcases}
   \end{equation}
   where $Q \in \{0,1\}^{k \times k}, c \in \{0,1\}^k,
-    R \in \{0,1\}^{k \times (n-k)}, t \in \{0,1\}^{n-k}, \Rank{R} = k$
+    R \in \{0,1\}^{n \times k}, t \in \{0,1\}^{n}, \Rank{R} = k$
   and $Q'_{ij} = 1$ iff $(i<j) \land (c_i=c_j=1)$.
   Now, if the pair $(Q,c,R,t)$ in~\eqref{eq:stabilizerStateStandardFormWithZ} is
   the same as that of the original form~\eqref{eq:stabilizerStateStandardForm},
@@ -692,7 +710,7 @@ Hence, the subsequent corollary is valuable.
 \subsection{Calculating the Overlap}
 \label{sec:dfs}
 
-In this section, we prove Theorem~\ref{thm:overlapProblem}.
+In this section, we prove the Theorem~\ref{thm:overlapProblem}.
 Be aware that the problem~\eqref{eq:overlapProblem}
 is equivalent to the following problem thank to the corollary~\ref{cor:stabilizerStateStandardFormWithZ}:
 \begin{equation*}
@@ -751,6 +769,7 @@ While the algorithm and proof presented above may seem somewhat rough, our actua
 Moreover, we can enhance efficiency further by employing branch cut heuristics, as we will explain in the next section.
 
 \subsection{Branch Cut For The DFS}
+\label{sec:branchCut}
 
 In the previous section, we explained the efficient algorithm for the overlap calculation.
 However, this algorithm can be much more faster
@@ -760,31 +779,30 @@ Firstly, please recall that we are maximizing the following:
 \begin{equation*}
   \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x} }
 \end{equation*}
-
-This value can easily evaluate as the following:
+This can be easily bounded by
 \begin{equation*}
   \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x} }
   \leq \max_{c,Q} \qty{ \sum_{x=0}^{2^n-1} \abs{-1^{x^\top Q x} i^{c^\top x} P_x} }
   = \sum_{x=0}^{2^n-1} \abs{P_x}
 \end{equation*}
-
 However, since each coefficient takes only $1, -1, i$ or $-i$,
-we can obtain more tight bound by
+we can obtain
 \begin{equation}\label{eq:branchCutNewProblemDefinition}
   \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x} }
   \leq \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} i^{c_x} P_x} }
 \end{equation}
 where $c_x \in \qty{0, 1, 2, 3}$ is the independent variable for each $x$.
 Let $P^* = \sum_{x=0}^{2^n-1} i^{c_x^*} P_x$ be
-the one of optimal solutions for the problem~\eqref{eq:branchCutNewProblemDefinition}.
+one of the optimal solutions of~\eqref{eq:branchCutNewProblemDefinition},
+i.e., $\abs{P^*} = \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} i^{c_x} P_x} }$.
 Then, without loss of generality,
 we can assume that $\frac{\pi}{2} \leq \arg P^* < \frac{3\pi}{2}$,
 and by sorting and multiplying $i,-1$ or $-i$ to $P_x$ appropriately,
 we can also assume that
 \begin{equation}\label{eq:branchCutArgOrder}
-  0 \leq \arg{(P_0)} \leq \arg{(P_1)} \leq \dots \leq \arg{(P_{2^n-1})} < \pi/2.
+  0 \leq \arg(P_0) \leq \arg(P_1) \leq \dots \leq \arg(P_{2^n-1}) < \pi/2.
 \end{equation}
-If all $c_x$ satisfies $\arg{(P^*)} - \pi/4 \leq \arg{\qty(i^{c_x} P_x)} < \arg{(P^*)} + \pi/4$,
+If all $c_x$ satisfies $\arg(P^*) - \pi/4 \leq \arg\qty(i^{c_x} P_x) < \arg(P^*) + \pi/4$,
 then $c_x$ is optimal for $P^*$.
 Therefore, we can justify the following Algorithm \ref{alg:branchCut}
 by moving $\arg(P^*)$ in the range of $[\pi/2, 3\pi/2)$.
@@ -823,7 +841,7 @@ due to the sorting of $2^n$ elements.
 
 \section{The proof of Theorem~\ref{thm:restrictedRealProblem}}
 
-In this section, we prove Theorem~\ref{thm:restrictedRealProblem}.
+In this section, we prove the Theorem~\ref{thm:restrictedRealProblem}.
 The proof is based on the following lemma.
 \begin{lemma}{\label{lem:absRealForTIsAbsRealForS}}
   Suppose $y$ is a real vector and satisfies
@@ -860,7 +878,7 @@ The proof is based on the following lemma.
   which completes the proof.
 \end{proof}
 
-Now, we are ready to prove Theorem~\ref{thm:restrictedRealProblem}.
+Now, we are ready to prove the Theorem~\ref{thm:restrictedRealProblem}.
 
 \restrictedRealProblem*
 \begin{proof}
