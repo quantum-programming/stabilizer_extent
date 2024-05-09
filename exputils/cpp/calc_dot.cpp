@@ -74,14 +74,20 @@ struct dotCalculator {
     // check if the branch cut is possible for k-th psi ([psi_begin, psi_begin+(1<<k)))
     // Let MAX := max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} b_x|
     double absSum = calc_threshold_1(k, psi_begin);
-    if (absSum >= threshold) return false;
-    if (absSum < 1.2 * threshold) {
-      double max_abs2 = calc_threshold_2(k, psi_begin);
-      if (max_abs2 >= threshold * threshold) return false;
-    }
+    if (absSum < threshold) {
 #pragma omp atomic
-    branch_cut += kkk12s[k];
-    return true;
+      branch_cut += kkk12s[k];
+      return true;
+    }
+    if (absSum < 1.1 * threshold) {
+      double max_abs2 = calc_threshold_2(k, psi_begin);
+      if (max_abs2 < threshold * threshold) {
+#pragma omp atomic
+        branch_cut += kkk12s[k];
+        return true;
+      }
+    }
+    return false;
   }
 
   vec<std::tuple<double, int, vc, INT>> dfs_sub(const int k, const vc& psi,
@@ -162,20 +168,10 @@ struct dotCalculator {
         // 1. set the value of c[k] and Q[k,k]
         INT ret_idx = stk1.back();
         stk1.pop_back();
-        // In order to speed up, compute the dot product directly for k=1,2
         if (k == 1) {
           for (int i = 0; i < kkk12s[1]; i++) {
             double val = std::abs(Amats.Amat1[i][0] * psi_list[2 + 0] +
                                   Amats.Amat1[i][1] * psi_list[2 + 1]);
-            if (val > threshold) values_local.emplace_back(val, ret_idx);
-            ret_idx++;
-          }
-        } else if (k == 2) {
-          for (int i = 0; i < kkk12s[2]; i++) {
-            double val = std::abs(Amats.Amat2[i][0] * psi_list[4 + 0] +
-                                  Amats.Amat2[i][1] * psi_list[4 + 1] +
-                                  Amats.Amat2[i][2] * psi_list[4 + 2] +
-                                  Amats.Amat2[i][3] * psi_list[4 + 3]);
             if (val > threshold) values_local.emplace_back(val, ret_idx);
             ret_idx++;
           }
@@ -395,7 +391,9 @@ int main() {
   dotCalculator calculator;
   auto res = calculator.calc_dot(n, psi, is_dual_mode);
 
-  if (res.empty()) res.push_back(-1);
+  // if the result is empty, cnpy fails to save the file.
+  // we add a dummy value in this case.
+  if (res.empty()) res.push_back(0);
 
   // cnpy does not correspond to __int128_t, so we use long long instead.
   vec<long long> res_ll_1(res.size());
