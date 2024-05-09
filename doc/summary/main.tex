@@ -173,9 +173,10 @@
     The size of $\calS_n$,
     the data size of $A_n$ in sparse matrix
     format~\cite{scipyScipySparseCsc_matrix},
-    and the average numerical computation time
-    of the naive algorithm and our proposed algorithm
-    for 10 Haar random pure state.
+    and the average time
+    for 10 Haar random pure state
+    to numerically compute the stabilizer extent
+    by the naive algorithm and our proposed algorithm
   }
   \label{table:sizeOfCalSn}
   \centering
@@ -222,7 +223,7 @@ and defined as follows:
   \xi(\psi) \defeq \min_{c\in \bbC^{\abs{\calS_n}}}
   \left\{ \norm{c}_1^2 \relmiddle| \ket{\psi} = \sum_{j=1}^{\abs{\calS_n}} c_j \ket{\phi_j} \right\}
 \end{equation}
-In this paper,  our focus lies on numerically computing the stabilizer extent.
+In this paper, our focus lies on numerical computation of the stabilizer extent.
 This definition of the stabilizer extent
 can be simplified as
 complex $L^1$-norm minimization problem:
@@ -260,11 +261,13 @@ which takes a columns set $\calC \subseteq \calA$
 and a vector $b$,
 and returns the optimal primal solution $x$ and
 dual optimal solution $y$ of
-the SOCP problem~\eqref{eq:stabilizerExtentDual}.
+the SOCP problem~\eqref{eq:stabilizerExtentPrimal}
+and~\eqref{eq:stabilizerExtentDual}.
 In actual implementation,
 this function can be realized by just solving
 the corresponding primal problem~\eqref{eq:stabilizerExtentPrimal}
-with MOSEK~\cite{mosek} or CVXPY~\cite{10.5555/2946645.3007036,agrawal2018rewriting}.
+with SOCP solver, such as MOSEK~\cite{mosek} or
+CVXPY~\cite{10.5555/2946645.3007036,agrawal2018rewriting}.
 
 \section{Scaling up The Exact Stabilizer Extent Calculation}
 
@@ -277,12 +280,15 @@ for $n>5$ qubit systems becomes impractical
 due to the superexponential growth
 of the number of stabilizer states $\abs{\calS_n}$.
 To address this challenge,
+in~\cite{hamaguchiHandbookEfficientlyQuantifying2023},
 we proposed employing the classical optimization
 technique known as column generation (CG)
 method~\cite{desaulniersColumnGeneration2005}
-for Robustness of Magic calculation~\cite{hamaguchiHandbookEfficientlyQuantifying2023}.
+for Robustness of Magic calculation.
 However, it remained unclear whether the same approach
-could be applied to stabilizer extent.
+could be applied to stabilizer extent,
+since SOCP is generally more difficult class of problem
+than LP, which is used in RoM calculation.
 Here, we demonstrate that leveraging the specific
 structure of stabilizer states enables a similar
 method to work effectively for calculating
@@ -310,7 +316,6 @@ Further, we will show fidelity plays a crucial role
 in our proposed algorithm in later sections.
 In this section, we show that how to compute
 the fidelity efficiently up to \orange{8}-qubit systems.
-
 To this end, we introduce the following proposition.
 As a well-known fact,
 the stabilizer states have a form as shown in the following proposition.
@@ -373,7 +378,7 @@ this is basically equivalent to the following problem:
 If we solve~\eqref{eq:overlapProblem} naively,
 the time complexity is $\order{2^{n+n(n+1)/2} 2^n n^2}$,
 where $2^{n+n(n+1)/2}$ is the number of the possible $(c,Q)$,
-$2^n$ is the number of term in the sum,
+$2^n$ is the number of the terms in the summation,
 and $n^2$ is the computational cost per each term.
 However, we can reduce this time complexity
 by using the following theorem.
@@ -385,7 +390,8 @@ by using the following theorem.
 The basic algorithm to solve this problem
 is the depth-first search (DFS) algorithm,
 which is describe in Figure~\ref{fig:dfs}.
-The detailed proof is given in Appendix~\ref{sec:dfs}.
+The detailed proof is given in Appendix~\ref{sec:dfs}
+\orange{or here?}.
 Consequently, the next theorem is obtained.
 \begin{restatable}{theorem}{complexityStabilizerOverlap}
   \label{thm:complexityStabilizerOverlap}
@@ -399,7 +405,7 @@ Consequently, the next theorem is obtained.
   space complexity of $\order{2^n}$.
 \end{restatable}
 As a remark,
-the fidelity a random 8-qubit pure state can be computed
+the fidelity of a random 8-qubit pure state can be computed
 in \orange{??} minutes with a \textit{laptop} powered by Intel(R)
 Core(TM) i7-10510U CPU with 16 GB RAM.
 It's worth noting that the algorithm's speed
@@ -407,7 +413,7 @@ is enhanced by branch cutting within
 the DFS algorithm,
 as detailed in Appendix~\ref{sec:branchCut}.
 We will use this algorithm as a subroutine
-in the later sections.
+in later sections.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{imgs/dfs.pdf}
@@ -469,7 +475,7 @@ in the later sections.
     (b) The convergence of the CG method
     for the same state.
     The max violation becomes 1.00
-    after \orange{10} iterations, which means
+    after \orange{9} iterations, which means
     the optimal solution is found.
   }
   \label{fig:CG}
@@ -510,7 +516,7 @@ $\ket{\psi}$ and $\ket{\phi_j}$.
 Hence, choosing the states based on their overlaps
 is a reasonable choice.
 The numerical experiments result
-in~\ref{fig:CG}
+in Figure~\ref{fig:CG}
 also support the effectiveness of this heuristic.
 In the case of a random pure 8-qubit state,
 even if we use as small subset as
@@ -538,7 +544,7 @@ The convergence of the CG method
 is also confirmed in numerical experiments.
 For the same 8-qubit state as in the initialization,
 $\max_{a_j \in \calA} \abs{a_j^\dagger y_k}$
-reaches 1.00 after 10 iterations,
+reaches 1.00 after \orange{9} iterations,
 indicating the discovery of the optimal solution.
 
 \subsection{For the case $\ket{\psi}$ is Real}
@@ -574,19 +580,19 @@ the columns in $\calA_n$ as $\calA'_n$.
 Then, the next theorem holds.
 \begin{restatable}{theorem}{restrictedRealProblem}
   \label{thm:restrictedRealProblem}
-  Suppose that the state $\ket{\psi}$ is real.
+  Suppose that the state $\ket{\psi}$ is \orange{real}.
   If we substitute the column set $\calA_n$ with $\calA'_n$
   in the problem~\eqref{eq:stabilizerExtentPrimal},
   the optimal solution of the restricted problem
   is also optimal for the original problem.
 \end{restatable}
 
-Thanks to theorem~\ref{thm:restrictedRealProblem},
+Thanks to Theorem~\ref{thm:restrictedRealProblem},
 we can reduce the size of the column set size
 by a factor of $2^n$.
 \orange{numerical experiments result?}
 
-\section{Approx Solutions}
+\section{Approximation of the Stabilizer Extent}
 
 In the preceding sections,
 we proposed algorithms to calculate the exact stabilizer extent.
@@ -600,13 +606,14 @@ when added to the column set $\calC$.
 These methods can be relatively easily applied even for sufficiently large $n$.
 Therefore, it is possible to consider relaxed algorithms based on Algorithm~\ref{alg:CG}
 as a method for obtaining approximate value of stabilizer extent.
-In this section, we describe algorithms for obtaining such approximate solutions.
+In this section, we describe
+approximation algorithms for the stabilizer extent calculation.
 
-\subsection{Approximation of fidelity}
+\subsection{Approximation of Fidelity}
 
-First, we considered about
-exact maximization of the overlap, fidelity,
-in~\ref{sec:coreSubroutine} defined as
+First, we considered about fidelity
+in Section~\ref{sec:coreSubroutine}, which can be computed
+by solving
 \begin{equation}\label{eq:exactMaximalOverlap}
   \max_{a_j \in \calA_n} \abs{a_j^\dagger b}.
 \end{equation}
@@ -615,8 +622,7 @@ we consider the following problem to find sufficiently large overlap:
 \begin{equation}\label{eq:approxMaximalOverlap}
   \text{Find $a_j \in \calA_n$ s.t. $\abs{a_j^\dagger b} > 1$}.
 \end{equation}
-
-For this, a method called hill climbing is effective.
+To solve this, a method called hill climbing is effective.
 This method repeatedly performs local improvements
 to find the solutions for the problem~\eqref{eq:approxMaximalOverlap}.
 It's worth noting that a similar approach
@@ -632,7 +638,8 @@ we restrict our consideration to
 \end{equation}
 This can easily be generalized to other cases as well.
 The neighborhood of $(c,Q)$ is defined as
-the set of $(c',Q')$ that can be obtained by flipping a single bit of $c$ or $Q$,
+the set of $(c',Q')$ that can be obtained
+by flipping a single bit of $c$ or $Q$,
 so there are $n+\frac{n(n+1)}{2}$ neighbors in total.
 We present the pseudo code in
 Algorithm~\ref{alg:approxOverlap}
@@ -663,11 +670,12 @@ to solve~\eqref{eq:approxOverlap}.
 
 Here, to demonstrate the effectiveness of this approximation method,
 we present computational results
-for the case $\ket{\psi} = \ket{\phi_0}^{\otimes 2}$.
+for the case $\ket{\psi} = \ket{\phi_0}^{\otimes n}$.
 By the multiplicativity of the stabilizer extent
 \cite[Proposition 1]{Bravyi2019simulationofquantum},
-we have $\xi(\ket{\psi}) = \xi(\ket{\phi_0})$
+we have $\xi(\ket{\psi}) = \xi(\ket{\phi_0})^n$
 if $\ket{\psi_0}$ is at most 3-qubit state.
+In this section, $\ket{\phi_0}$ is a single qubit state.
 \orange{numerical experiments result here.}
 
 \orange{We can actually confirm that
@@ -677,7 +685,17 @@ if $\ket{\psi_0}$ is at most 3-qubit state.
 
 \section{Discussion}
 
-In this paper, we have shown that \orange{todo}.
+In this paper, \orange{we have shown that
+  the fidelity and stabilizer extent can be
+  efficiently calculated
+  by leveraging the specific structure of stabilizer states.
+  We have proposed a novel algorithm based on
+  the column generation method
+  to compute the exact stabilizer extent,
+  and demonstrated that it can be applied to
+  sufficiently large systems.
+  We have also proposed an approximation algorithm
+  for more large systems.}
 
 There is still room for improvement
 in some specific cases.
@@ -691,6 +709,8 @@ would be promising and is left for future work.
 
 Furthermore, there is some more future direction.
 For example, \orange{todo}.
+
+\vskip\baselineskip
 
 \emph{Acknowledgements.---}
 
@@ -708,7 +728,7 @@ We would like to thank \orange{N. Marumo} for valuable comments on the manuscrip
 \section{Fast Algorithm for Overlap}
 
 In this section, we will explain the detail of
-dfs algorithm in Section~\ref{sec:coreSubroutine}
+DFS algorithm in Section~\ref{sec:coreSubroutine}
 and introduce some heuristics to improve the efficiency.
 
 \subsection{Efficient Enumeration of Stabilizer States}
@@ -755,14 +775,16 @@ In this section, we prove the Theorem~\ref{thm:stabilizerStatesStandardForm}.
   Therefore, the mapping is surjective, which concludes the proof.
 \end{proof}
 
-In theorem~\ref{thm:stabilizerStatesStandardForm},
+In Theorem~\ref{thm:stabilizerStatesStandardForm},
 we used $\bbF_2$.
-However, from the perspective of the dfs algorithm,
+However, from the perspective of the DFS algorithm,
 it is more practical to use $\{0,1\} \subset \bbZ$
 and permit the term $c^\top x$ to be any integer value.
+Otherwise, $-1 = i^{1+1} \neq i^{0} =1$ although $1+1=0$ in $\bbF_2$,
+which makes the algorithm more complicated.
 Hence, the subsequent corollary is valuable.
 \begin{corollary}\label{cor:stabilizerStateStandardFormWithZ}
-  In theorem~\ref{thm:stabilizerStatesStandardForm},
+  In Theorem~\ref{thm:stabilizerStatesStandardForm},
   We can substitute $\bbF_2$ with $\{0,1\} \subset \bbZ$.
 \end{corollary}
 \begin{proof}
@@ -880,8 +902,12 @@ This can be easily bounded by
   \leq \max_{c,Q} \qty{ \sum_{x=0}^{2^n-1} \abs{(-1)^{x^\top Q x} i^{c^\top x} P_x} }
   = \sum_{x=0}^{2^n-1} \abs{P_x}
 \end{equation*}
-However, since each coefficient takes only $1, -1, i$ or $-i$,
-we can obtain
+Such a bound is important for the branch cut heuristics,
+because it allows us to terminate the branch
+if the current value is inferior to the bound.
+However, this bound can be more refined.
+Since each coefficient takes only
+$1, -1, i$ or $-i$, we can obtain
 \begin{equation}\label{eq:branchCutNewProblemDefinition}
   \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} (-1)^{x^\top Q x} i^{c^\top x} P_x} }
   \leq \max_{c,Q} \qty{ \abs{\sum_{x=0}^{2^n-1} i^{c_x} P_x} }
@@ -900,11 +926,11 @@ we can also assume that
 It is evident that all $c_x$ satisfies
 $\arg(P^*) - \pi/4 \leq \arg\qty(i^{c_x} P_x) < \arg(P^*) + \pi/4$.
 Otherwise, adjusting $c_x$ would yield a larger value.
-Moreover, if $\arg(P^)$ is fixed within the range
+Moreover, if $\arg(P^*)$ is fixed within the range
 $[\pi/2, 3\pi/2)$, such $c_x$ values yield the maximum value.
 Thus, Algorithm \ref{alg:branchCut} is validated,
 as it covers all possible cases regardless of the specific value
-of $\arg(P^) \in [\pi/2, 3\pi/2)$.
+of $\arg(P^*) \in [\pi/2, 3\pi/2)$.
 Refer to Figure~\ref{fig:argsort} for a visual representation of this algorithm.
 The time complexity of this approach is
 $\order{n2^n}$ owing to the sorting of $2^n$ elements.
@@ -927,10 +953,10 @@ $\order{n2^n}$ owing to the sorting of $2^n$ elements.
   \centering
   \includegraphics[width=\columnwidth]{imgs/argsort.pdf}
   \caption{
-    Visualization of Algorithm \ref{alg:branchCut}.
+    Visualization of Algorithm~\ref{alg:branchCut}.
     Suppose that $n=2$ and $P_x$ are represented as the vectors in the complex plane
     (e.g., $P_{00} = 1-5i$) in the left figure.
-    Sorting and Iterating the loop in Algorithm \ref{alg:branchCut}
+    Sorting and Iterating the loop in Algorithm~\ref{alg:branchCut}
     yields $2^n$ patterns of the coefficients $c_x$,
     as depicted in the right figure.
     The maximum for the problem \eqref{eq:branchCutNewProblemDefinition}
@@ -998,7 +1024,7 @@ Now, we are ready to prove the Theorem~\ref{thm:restrictedRealProblem}.
   By the strong duality theorem,
   $\mathrm{OPT}$ is also the optimal value
   for the original dual problem.
-  From the lemma \ref{lem:absRealForTIsAbsRealForS},
+  From the Lemma~\ref{lem:absRealForTIsAbsRealForS},
   we can see that $y^*$ is a feasible solution
   for the original dual problem and $\mathrm{OPT} \geq \Re(b^\dagger y^*)$.
   Again, by applying the strong duality theorem
