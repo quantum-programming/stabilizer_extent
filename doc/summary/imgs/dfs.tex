@@ -36,9 +36,9 @@
 
 \begin{document}
 \begin{tikzpicture}[
-        myBlock1/.style={draw=cA,fill=cA!50,ultra thick},
-        myBlock2/.style={draw=cB,fill=cB!50,ultra thick},
-        myBlock3/.style={draw=cC,fill=cC!50,ultra thick},
+        myBlock1/.style={draw=cA,fill=cA!50,line width=1.9pt},
+        myBlock2/.style={draw=cB,fill=cB!50,line width=1.9pt},
+        myBlock3/.style={draw=cC,fill=cC!50,line width=1.9pt},
         myNode/.style={align=right,midway},
     ]
     \foreach \i/\bit in {0/00,1/01,2/10,3/11}{
@@ -85,10 +85,10 @@
 
     \newcommand{\Arrows}[3]{
         \begin{scope}[xshift=#1.0cm, yshift=-#2.0cm]
-            \draw[thick,->] (0.5,-0.0) -- (0.5,-1.0) node[xshift=8,yshift=7] {$+$};
-            \draw[thick,->] (1.5,-0.5) -- (1.5,-1.0) node[xshift=8,yshift=7] {$-$};
-            \draw[thick,->] (2.5,-0.5) -- (2.5,-1.0) node[xshift=8,yshift=7] {$+i$};
-            \draw[thick,->] (3.5,-0.5) -- (3.5,-1.0) node[xshift=8,yshift=7] {$-i$};
+            \draw[thick,->] (0.5,-0.0) -- (0.5,-1.0); % node[xshift=8,yshift=7] {$+$};
+            \draw[thick,->] (1.5,-0.5) -- (1.5,-1.0); % node[xshift=8,yshift=7] {$-$};
+            \draw[thick,->] (2.5,-0.5) -- (2.5,-1.0); % node[xshift=8,yshift=7] {$+i$};
+            \draw[thick,->] (3.5,-0.5) -- (3.5,-1.0); % node[xshift=8,yshift=7] {$-i$};
             \draw[thick,  ] (0.5,-0.5) -- (3.5,-0.5);
         \end{scope}}
     \draw[thick,->] (0.5 ,-3.0) -- (0.5 ,-4.0);
