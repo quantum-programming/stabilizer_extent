@@ -4,6 +4,7 @@
 #define REP_01(i) for (int i = 0; i <= 1; i++)
 
 struct AmatForSmallN {
+  // Amat for R=I and t=0
   std::complex<double> Amat1[1 << (1 + 1 * (1 + 1) / 2)][1 << 1];
   std::complex<double> Amat2[1 << (2 + 2 * (2 + 1) / 2)][1 << 2];
 
