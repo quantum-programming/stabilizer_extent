@@ -43,7 +43,7 @@ struct dotCalculator {
   AmatForSmallN Amats;
   vec<std::pair<double, INT>> values;
   double threshold = 0.0;
-  static constexpr size_t MAX_VALUES_SIZE = 10000;
+  static constexpr size_t MAX_VALUES_SIZE = 100000;
   static constexpr int LARGE_K = 7;
 
   template <bool is_final = false>
@@ -81,8 +81,8 @@ struct dotCalculator {
     vec<std::tuple<double, int, vc, INT>> stk1;
     vec<std::tuple<int, int, INT>> stk2;
     vc next(1 << (k - 1));
-    for (int c_0 = 0; c_0 <= 1; c_0++)
-      for (int q_00 = 0; q_00 <= 1; q_00++) {
+    for (bool c_0 : {false, true})
+      for (bool q_00 : {false, true}) {
         next[0] = Ps[0] + Ps[1] * COMPLEX(q_00 ? -1 : 1) * (c_0 ? COMPLEX(0, 1) : 1);
         COMPLEX coeff = c_0 ? COMPLEX(0, 1) : 1.0;
         // non-recursive dfs
@@ -92,7 +92,7 @@ struct dotCalculator {
           auto [q_0, i, ret_idx_local] = stk2.back();
           stk2.pop_back();
           for (int x1 = 1 << (i - 1); x1 < 1 << i; x1++) {
-            if (__builtin_parity(q_00 ^ (q_0 & x1)))
+            if (q_00 ^ __builtin_parity(q_0 & x1))
               next[x1] = Ps[x1 << 1] - coeff * Ps[(x1 << 1) ^ 1];
             else
               next[x1] = Ps[x1 << 1] + coeff * Ps[(x1 << 1) ^ 1];
@@ -138,7 +138,7 @@ struct dotCalculator {
     // 1. set the value of c[k] and Q[k,k] (stk1)
     // 2. set the value of Q[k,i] (k<=i)   (stk2)
     vec<INT> stk1;
-    vec<std::tuple<int, int, INT, bool, bool>> stk2;
+    vec<std::tuple<int, int_fast8_t, INT, bool, bool>> stk2;
 
     // in order to reduce critical section, we save values to local variable temporarily
     vec<std::pair<double, INT>> values_local;
@@ -163,8 +163,8 @@ struct dotCalculator {
           }
         } else {
           if (check_branch_cut(k, Ps_list.begin() + (1 << k))) continue;
-          for (int c_0 = 0; c_0 <= 1; c_0++)
-            for (int q_00 = 0; q_00 <= 1; q_00++) {
+          for (bool c_0 : {false, true})
+            for (bool q_00 : {false, true}) {
               stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3), c_0, q_00);
               stk2.emplace_back(0, 1, ret_idx, c_0, q_00);
               ks.push_back(-k);
@@ -185,7 +185,7 @@ struct dotCalculator {
         COMPLEX coeff = c_0 ? COMPLEX(0, 1) : 1.0;
         for (int x1 = 1 << (i - 1); x1 < 1 << i; x1++) {
           int idx = (1 << (k - 1)) ^ x1;
-          if (__builtin_parity(q_00 ^ (q_0 & x1)))
+          if (q_00 ^ __builtin_parity(q_0 & x1))
             Ps_list[idx] = Ps_list[idx << 1] - coeff * Ps_list[(idx << 1) ^ 1];
           else
             Ps_list[idx] = Ps_list[idx << 1] + coeff * Ps_list[(idx << 1) ^ 1];
@@ -335,7 +335,7 @@ int main() {
     is_dual_mode = true;
   }
 
-  // If n>=10, use __int128_t instaed of long long for the data type INT.
+  // If n>=10, use __int128_t instead of long long for the data type INT.
   // However, we do not guarantee the overflow would not happen.
   assert(n <= 9);
 
