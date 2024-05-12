@@ -95,7 +95,7 @@ def recovery_states_from_idxs(n: int, idxs: List[int]) -> csc_matrix:
 def test_recovery_states_from_idxs():
     for n in [1, 2, 3]:
         Amat_actual = get_Amat_sparse(n)
-        Amat_recovered = recovery_states_from_idxs(n, range(Amat_actual.shape[1]))
+        Amat_recovered = recovery_states_from_idxs(n, list(range(Amat_actual.shape[1])))
         print(Amat_recovered.toarray())
         for _ in range(5):
             random_vec = np.random.rand(Amat_actual.shape[0]) + 1j * np.random.rand(

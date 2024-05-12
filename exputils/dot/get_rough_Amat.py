@@ -45,10 +45,10 @@ if __name__ == "__main__":
     n = 5
     psi = make_random_quantum_state("pure", n, 0)
 
-    rough_Amat = get_rough_Amat(n, psi)
+    rough_Amat = get_rough_Amat(n, psi, False, verbose=True)
     dots = psi.conj().T @ rough_Amat
 
-    topK_Amat = get_topK_Amat(n, psi, False)
+    topK_Amat = get_topK_Amat(n, psi, False, K=10000, verbose=True)
     actual_dots = psi.conj().T @ topK_Amat
 
     plt.hist(
@@ -56,4 +56,5 @@ if __name__ == "__main__":
         bins=100,
         label=["rough", "actual"],
     )
+    plt.legend()
     plt.show()

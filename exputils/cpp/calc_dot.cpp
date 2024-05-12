@@ -16,7 +16,7 @@ INT kkk12s[11] = {calc_kkk12(0), calc_kkk12(1), calc_kkk12(2), calc_kkk12(3),
 struct dotCalculator {
   // compute top MAX_VALUES_SIZE values of |<psi|phi>|
 
-  dotCalculator() {}
+  dotCalculator(size_t MAX_VALUES_SIZE) : MAX_VALUES_SIZE(MAX_VALUES_SIZE) {}
 
   auto calc_dot(int n, const vc& psi, bool is_dual_mode) {
     // Let b_i := <i|psi>, then
@@ -43,7 +43,7 @@ struct dotCalculator {
   AmatForSmallN Amats;
   vec<std::pair<double, INT>> values;
   double threshold = 0.0;
-  static constexpr size_t MAX_VALUES_SIZE = 100000;  // 10000;
+  size_t MAX_VALUES_SIZE;
   static constexpr int LARGE_K = 7;
 
   template <bool is_final = false>
@@ -223,7 +223,7 @@ struct dotCalculator {
 
   void calc_dot_main(int n, const vc& psi, const bool is_dual_mode) {
     assert(int(psi.size()) == (1 << n));
-    if (is_dual_mode) threshold = 1.00;
+    if (is_dual_mode) threshold = 0.97;  // little bit smaller than 1.0
 
     // Total number of stabilizer states
     INT t_s_g_s = total_stabilizer_group_size(n);
@@ -315,6 +315,7 @@ int main() {
   int n;
   vc psi;
   bool is_dual_mode;
+  size_t MAX_VALUES_SIZE;
 
   try {
     cnpy::NpyArray psi_npy = cnpy::npz_load("temp_in.npz")["psi"];
@@ -325,6 +326,7 @@ int main() {
     psi.resize(1 << n);
     for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
+    MAX_VALUES_SIZE = cnpy::npz_load("temp_in.npz")["K"].data<int>()[0];
   } catch (const std::exception& e) {
     n = 6;
     psi.resize(1 << n);
@@ -333,13 +335,14 @@ int main() {
       psi[i] = COMPLEX(std::uniform_real_distribution<double>(-0.5, 0.5)(mt),
                        std::uniform_real_distribution<double>(-0.5, 0.5)(mt));
     is_dual_mode = true;
+    MAX_VALUES_SIZE = 10000;
   }
 
   // If n>=10, use __int128_t instead of long long for the data type INT.
   // However, we do not guarantee the overflow would not happen.
   assert(n <= 9);
 
-  dotCalculator calculator;
+  dotCalculator calculator(MAX_VALUES_SIZE);
   auto res = calculator.calc_dot(n, psi, is_dual_mode);
 
   // if the result is empty, cnpy fails to save the file.

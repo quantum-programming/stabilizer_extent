@@ -12,12 +12,20 @@ def calculate_extent_CG(
     assert Amat_method in ["topK", "rough"]
     print(f"CG: {n=}, {method=}")
     print("start: calculate dots")
-    get_Amat = get_topK_Amat if Amat_method == "topK" else get_rough_Amat
-    current_Amat = get_Amat(n, psi, is_dual_mode=False, verbose=verbose)
+    get_Amat = (
+        (
+            lambda *args: get_topK_Amat(
+                *args, K=10000 if n <= 8 else 100000, verbose=True
+            )
+        )
+        if Amat_method == "topK"
+        else (lambda *args: get_rough_Amat(*args, verbose=True))
+    )
+    current_Amat = get_Amat(n, psi, False)
     iter_max = 100
     eps = 1e-8
     discard_current_threshold = 0.8
-    violation_max = 10000
+    violation_max = 100000
     extends = []
     max_values = []
     for it in range(iter_max):
@@ -29,7 +37,7 @@ def calculate_extent_CG(
         extends.append(stabilizer_extent)
         print(f"{stabilizer_extent=}")
         print("start: calculate dual dots")
-        dual_dots_state = get_Amat(n, dual, True, verbose=verbose)
+        dual_dots_state = get_Amat(n, dual, True)
         if dual_dots_state.shape[1] == 0:
             print("OPTIMAL!")
             max_values.append(1.0)

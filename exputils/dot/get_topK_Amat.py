@@ -12,11 +12,11 @@ from exputils.stabilizer_group import total_stabilizer_group_size
 
 
 def get_topK_Amat(
-    n: int, psi: np.ndarray, is_dual_mode: bool, verbose: bool
+    n: int, psi: np.ndarray, is_dual_mode: bool, K: int, verbose: bool
 ) -> csc_matrix:
     assert type(psi) == np.ndarray and psi.dtype == np.complex128
     assert psi.shape == (2**n,)
-    np.savez("temp_in.npz", psi=psi, is_dual_mode=is_dual_mode)
+    np.savez("temp_in.npz", psi=psi, is_dual_mode=is_dual_mode, K=K)
 
     path = pathlib.Path(__file__).parent.parent / "cpp/calc_dot.exe"
     with subprocess.Popen([path], stderr=subprocess.PIPE) as p:
@@ -67,7 +67,9 @@ def test_get_topK_Amat():
             np.random.seed(seed)
             psi = np.random.rand(2**n) + 1j * np.random.rand(2**n)
             psi /= np.linalg.norm(psi)
-            res_fast = get_topK_Amat(n, psi, False).toarray()
+            res_fast = get_topK_Amat(
+                n, psi, is_dual_mode=False, K=10000, verbose=True
+            ).toarray()
             res_slow = _get_topK_Amat_naive(n, psi, res_fast.shape[1])
             dots_fast = np.sort(np.abs(psi.conj() @ res_fast))
             dots_slow = np.sort(np.abs(psi.conj() @ res_slow))
