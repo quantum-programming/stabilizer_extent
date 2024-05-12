@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../util/Amat.cpp"
 #include "../util/base.cpp"
 #include "../util/cnpy.cpp"
 #include "../util/math.cpp"

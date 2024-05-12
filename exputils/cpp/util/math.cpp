@@ -12,36 +12,36 @@ vvi generate_combinations(int n, int k) {
       if (v[i]) combination.push_back(i);
     combinations.push_back(combination);
   } while (prev_permutation(v.begin(), v.end()));
-  INT nCk = 1;
-  for (INT i = 1; i <= k; i++) {
+  __int128_t nCk = 1;
+  for (__int128_t i = 1; i <= k; i++) {
     // Check overflow
-    assert(nCk <= std::numeric_limits<INT>::max() / (n - k + i));
+    assert(nCk <= std::numeric_limits<__int128_t>::max() / (n - k + i));
     nCk *= n - k + i;
     nCk /= i;
   }
-  assert(INT(combinations.size()) == nCk);
+  assert(__int128_t(combinations.size()) == nCk);
   return combinations;
 }
 
-INT q_factorial(int k) {
+__int128_t q_factorial(int k) {
   // https://mathworld.wolfram.com/q-Factorial.html
   // q_factorial where q=2
   // [k]_q! = \prod_{i=1}^k (1 + q + q^2 + ... + q^{i-1})
   assert(k >= 0);
-  INT ret = 1;
+  __int128_t ret = 1;
   for (int i = 1; i <= k; ++i) ret *= (1ll << i) - 1;
   vi small_k_results = {1, 1, 3, 21, 315, 9765};
   if (k <= 5) assert(ret == small_k_results[k]);
   return ret;
 }
 
-INT q_binomial(int n, int k) {
+__int128_t q_binomial(int n, int k) {
   // https://mathworld.wolfram.com/q-BinomialCoefficient.html
   // q_binomial where q=2
   // [n k]_q = \frac{[n]_q!}{[k]_q! [n-k]_q!}
   if (n - 1 == k) return (1ll << n) - 1;
-  INT ret1 = q_factorial(n) / (q_factorial(k) * q_factorial(n - k));
-  INT ret2 = 1;
+  __int128_t ret1 = q_factorial(n) / (q_factorial(k) * q_factorial(n - k));
+  __int128_t ret2 = 1;
   for (int i = 0; i < k; i++) {
     ret2 *= 1 - (1ll << (n - i));
     ret2 /= 1 - (1ll << (i + 1));
@@ -50,11 +50,11 @@ INT q_binomial(int n, int k) {
   return ret1;
 }
 
-constexpr INT total_stabilizer_group_size(int n) {
+constexpr __int128_t total_stabilizer_group_size(int n) {
   // https://arxiv.org/pdf/1711.07848.pdf
   // The number of n qubit pure stabilizer states
   // |S_n| = 2^n \prod_{k=1}^{n} (2^k + 1)
-  INT ret = 1ll << n;
+  __int128_t ret = 1ll << n;
   for (int k = 0; k < n; ++k) {
     ret *= (1ll << (n - k)) + 1;
   }

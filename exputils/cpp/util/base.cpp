@@ -30,7 +30,7 @@
 template <typename T> using vec = std::vector<T>;
 template <typename T> using vvec = std::vector<vec<T>>;
 template <typename T> using vvvec = std::vector<vvec<T>>;
-using INT = long long;
+using ll = long long;
 using COMPLEX = std::complex<double>;
 using vi = vec<int>; using vvi = vec<vi>; using vvvi = vec<vvi>;
 using vb = vec<bool>; using vvb = vec<vb>; using vvvb = vec<vvb>;
