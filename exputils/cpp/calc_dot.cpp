@@ -43,7 +43,7 @@ struct dotCalculator {
   AmatForSmallN Amats;
   vec<std::pair<double, INT>> values;
   double threshold = 0.0;
-  static constexpr size_t MAX_VALUES_SIZE = 100000;
+  static constexpr size_t MAX_VALUES_SIZE = 100000;  // 10000;
   static constexpr int LARGE_K = 7;
 
   template <bool is_final = false>
