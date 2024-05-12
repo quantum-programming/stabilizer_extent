@@ -113,9 +113,9 @@ vec<Info> hill_climbing(int k, const vc& b, const bool is_dual_mode) {
     }
     // assert(std::abs(now_abs - calc_abs_from_bQc(k, b, Q, c)) < 1e-9);
     if (!is_dual_mode || now_abs > 1.0) good_Qc.emplace_back(now_abs, Q, c);
-    if (good_Qc.size() > 2000) truncate_goods(good_Qc, 1000, true);
+    if (good_Qc.size() > 20000) truncate_goods(good_Qc, 10000, true);
   }
-  truncate_goods(good_Qc, 1000, true);
+  truncate_goods(good_Qc, 10000, true);
   vec<Info> ret;
   for (const auto& [val, Q, c] : good_Qc) ret.emplace_back(val, k, Q, c, vi(), 0);
   return ret;
@@ -170,7 +170,6 @@ std::tuple<vi, vi, vc> get_rough_topK_Amat(int n, const vc& _psi,
     }
   }
   truncate_goods(good_Rt, 10, false);
-  std::cerr << "progress: " << rref_gen.q_binom << "/" << rref_gen.q_binom << std::endl;
 
 #pragma omp parallel for num_threads(MAX_THREAD_NUM)
   for (const auto& [_, row_idxs, t] : good_Rt) {
@@ -194,6 +193,11 @@ std::tuple<vi, vi, vc> get_rough_topK_Amat(int n, const vc& _psi,
   if (good_kQcRt.empty()) {
     std::cerr << "No good kQcRt found" << std::endl;
     return {vi{-1}, vi{-1}, vc{-1}};
+  } else if (good_kQcRt.size() > 100000) {
+    std::sort(ALL(good_kQcRt), [](const auto& a, const auto& b) {
+      return std::get<0>(a) > std::get<0>(b);
+    });
+    good_kQcRt.resize(100000);
   }
 
   std::tuple<vi, vi, vc> ret = {vi(), vi(), vc()};

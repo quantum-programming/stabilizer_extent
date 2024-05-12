@@ -22,7 +22,7 @@ def calculate_extent_CG(
         else (lambda *args: get_rough_Amat(*args, verbose=True))
     )
     current_Amat = get_Amat(n, psi, False)
-    iter_max = 100
+    iter_max = 30
     eps = 1e-8
     discard_current_threshold = 0.8
     violation_max = 100000
