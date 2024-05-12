@@ -83,7 +83,7 @@ vec<Info> hill_climbing(int k, const vc& b, const bool is_dual_mode) {
   timer_local.start();
   vec<std::tuple<double, __int128_t, int>> good_Qc;
   // This function is based on hill climbing algorithm.
-  while (timer_local.ms() < 1000) {
+  while (timer_local.ms() < 30000) {
     // 1. Randomly choose Q and c
     __int128_t Q = randRangePow2(k * (k + 1) / 2);
     int c = randRangePow2(k);
@@ -166,8 +166,6 @@ std::tuple<vi, vi, vc> get_rough_topK_Amat(int n, const vc& _psi,
       {
         good_Rt.emplace_back(t1, row_idxs, t);
         if (good_Rt.size() > 20) truncate_goods(good_Rt, 10, false);
-        if (t == 0 && rref_idx % (rref_gen.q_binom / 10) == 0)
-          std::cerr << "progress: " << rref_idx << "/" << rref_gen.q_binom << std::endl;
       }
     }
   }
@@ -226,7 +224,6 @@ int main() {
     for (int i = 0; i < 1 << n; i++) psi[i] = psi_npy.data<COMPLEX>()[i];
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
   } catch (const std::exception& e) {
-    debug("Error: ", e.what());
     n = 5;
     psi.resize(1 << n);
     std::mt19937 mt(1);
@@ -239,7 +236,6 @@ int main() {
   auto rough_topK_Amat = get_rough_topK_Amat(n, psi, is_dual_mode);
 
   auto [indptr, indices, data] = rough_topK_Amat;
-  debug(indptr.size());
   cnpy::npz_save("temp_out.npz", "indptr", indptr.data(), {indptr.size()}, "w");
   cnpy::npz_save("temp_out.npz", "indices", indices.data(), {indices.size()}, "a");
   cnpy::npz_save("temp_out.npz", "data", data.data(), {data.size()}, "a");
