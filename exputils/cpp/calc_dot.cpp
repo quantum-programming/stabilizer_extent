@@ -27,7 +27,7 @@ struct dotCalculator {
     // Thus, we use b_i^\dagger as the input
     // in order to avoid the conjugate operation in the inner loop.
     timer1.start();
-    if (is_real_mode) {
+    if constexpr (is_real_mode) {
       vec<double> psi_real(1 << n);
       for (int i = 0; i < 1 << n; i++) psi_real[i] = psi[i].real();
       for (int i = 0; i < 1 << n; i++) assert(std::abs(psi[i].imag()) < 1e-10);
@@ -96,12 +96,12 @@ struct dotCalculator {
           ret_idx += kkk12s[k] >> 2;
           continue;
         }
-        if (is_real_mode)
+        if constexpr (is_real_mode)
           next[0] = Ps[0] + Ps[1] * (q_00 ? -1 : 1);
         else
           next[0] = Ps[0] + Ps[1] * COMPLEX(q_00 ? -1 : 1) * (c_0 ? COMPLEX(0, 1) : 1);
         VAL coeff = 1.0;
-        if (!is_real_mode) coeff = c_0 ? COMPLEX(0, 1) : 1.0;
+        if constexpr (!is_real_mode) coeff = c_0 ? COMPLEX(0, 1) : 1.0;
         // non-recursive dfs
         stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3));
         stk2.emplace_back(0, 1, ret_idx);
@@ -181,7 +181,7 @@ struct dotCalculator {
           if (val > threshold) values_local.emplace_back(val, ret_idx);
           ret_idx++;
           // 1+1i, 1-1i
-          if (is_real_mode) {
+          if constexpr (is_real_mode) {
             ret_idx += 2;
           } else {
             val = std::abs(Ps_list[2 + 0] + COMPLEX(0, 1) * Ps_list[2 + 1]);
@@ -212,7 +212,7 @@ struct dotCalculator {
         auto [q_0, i, ret_idx_local, c_0, q_00] = stk2.back();
         stk2.pop_back();
         if (q_0 == 0 && i == 1) {
-          if (is_real_mode)
+          if constexpr (is_real_mode)
             Ps_list[(1 << (k - 1)) ^ 0] =
                 Ps_list[(1 << k) ^ 0] + Ps_list[(1 << k) ^ 1] * (q_00 ? -1 : 1);
           else
@@ -221,7 +221,7 @@ struct dotCalculator {
                                             (c_0 ? COMPLEX(0, 1) : 1);
         }
         VAL coeff = 1.0;
-        if (!is_real_mode) coeff = c_0 ? COMPLEX(0, 1) : 1.0;
+        if constexpr (!is_real_mode) coeff = c_0 ? COMPLEX(0, 1) : 1.0;
         for (int x1 = 1 << (i - 1); x1 < 1 << i; x1++) {
           int idx = (1 << (k - 1)) ^ x1;
           if (q_00 ^ __builtin_parity(q_0 & x1))
@@ -262,7 +262,7 @@ struct dotCalculator {
 
   void calc_dot_main(int n, const vec<VAL>& psi) {
     assert(int(psi.size()) == (1 << n));
-    if (is_dual_mode) threshold = 0.97;  // little bit smaller than 1.0
+    if constexpr (is_dual_mode) threshold = 0.97;  // little bit smaller than 1.0
 
     // Total number of stabilizer states
     INT t_s_g_s = total_stabilizer_group_size(n);
