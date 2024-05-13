@@ -14,8 +14,6 @@ vvi generate_combinations(int n, int k) {
   } while (prev_permutation(v.begin(), v.end()));
   __int128_t nCk = 1;
   for (__int128_t i = 1; i <= k; i++) {
-    // Check overflow
-    assert(nCk <= std::numeric_limits<__int128_t>::max() / (n - k + i));
     nCk *= n - k + i;
     nCk /= i;
   }
