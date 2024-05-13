@@ -4,22 +4,22 @@
         "editor.formatOnSave": true
     },
     "latex-workshop.latex.recipes": [
-        // {
-        //     "name": "pdflatex*2",
-        //     "tools": [
-        //         "pdflatex",
-        //         "pdflatex"
-        //     ]
-        // },
-        // {
-        //     "name": "pdflatex&bibtex",
-        //     "tools": [
-        //         "pdflatex",
-        //         "bibtex",
-        //         "pdflatex",
-        //         "pdflatex"
-        //     ]
-        // },
+        {
+            "name": "pdflatex*2",
+            "tools": [
+                "pdflatex",
+                "pdflatex"
+            ]
+        },
+        {
+            "name": "pdflatex&bibtex",
+            "tools": [
+                "pdflatex",
+                "bibtex",
+                "pdflatex",
+                "pdflatex"
+            ]
+        },
         {
             "name": "ptex2pdf*2",
             "tools": [
