@@ -2,26 +2,16 @@ import numpy as np
 import scipy.sparse
 from exputils.extent.custom import calculate_extent_custom
 from exputils.dot.get_topK_Amat import get_topK_Amat
-from exputils.dot.get_rough_Amat import get_rough_Amat
 
 
 def calculate_extent_CG(
-    n: int, psi: np.ndarray, method: str = "mosek", Amat_method="topK", verbose=False
+    n: int, psi: np.ndarray, method: str = "mosek", verbose=False
 ) -> tuple:
     # Even if verbose=False, print some log.
-    assert Amat_method in ["topK", "rough"]
     print(f"CG: {n=}, {method=}")
     print("start: calculate dots")
-    get_Amat = (
-        (
-            lambda *args: get_topK_Amat(
-                *args, K=10000 if n <= 8 else 100000, verbose=True
-            )
-        )
-        if Amat_method == "topK"
-        else (lambda *args: get_rough_Amat(*args, verbose=True))
-    )
-    current_Amat = get_Amat(n, psi, False)
+    K = 10000 if n <= 8 else 100000
+    current_Amat = get_topK_Amat(n, psi, False, K, True)
     iter_max = 30
     eps = 1e-8
     discard_current_threshold = 0.8
@@ -37,7 +27,7 @@ def calculate_extent_CG(
         extends.append(stabilizer_extent)
         print(f"{stabilizer_extent=}")
         print("start: calculate dual dots")
-        dual_dots_state = get_Amat(n, dual, True)
+        dual_dots_state = get_topK_Amat(n, dual, True, K, True)
         if dual_dots_state.shape[1] == 0:
             print("OPTIMAL!")
             max_values.append(1.0)
@@ -66,9 +56,6 @@ def calculate_extent_CG(
         extra_Amat = dual_dots_state[
             :, np.argpartition(dual_dots, -extra_size)[-extra_size:]
         ]
-
-        if verbose:
-            print(f"{current_Amat.shape=}, {extra_Amat.shape=}")
         current_Amat = scipy.sparse.hstack([current_Amat, extra_Amat])
 
     return stabilizer_extent, extends, max_values, dual
