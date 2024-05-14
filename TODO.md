@@ -1,4 +1,8 @@
 # todo
 
-* [ ] add data for random_vs_overlap for n=9
+* [ ] write Abstract
+* [ ] write Introduction
 * [ ] add data for the case psi is real
+* [ ] check the word "real" is used correctly
+* [ ] write Conclusion
+* [ ] write Acknowledgements
