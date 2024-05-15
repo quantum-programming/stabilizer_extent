@@ -57,8 +57,8 @@
             \draw[myBlock2](\pos,-4) rectangle (\pos+1,-5.5) node[myNode] {$\a P_{00}$\\$\c P_{10}$};
             \draw[myBlock2](\pos,-5.5) rectangle (\pos+1,-7) node[myNode] {$\b P_{01}$\\$\d P_{11}$};
             \renewcommand{\baselinestretch}{1.0}
-            \node[anchor=north west,scale=1.2] at (\pos+1.1,-3.7) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
-            \node[anchor=north west,scale=1.2] at (\pos+1.1,-4.9) {$Q=\mqty[\y&\z\\&?]$};
+            \node[anchor=north west,scale=1.2] at (\pos+1.1,-3.7) {$Q=\mqty[\y&\z\\&?]$};
+            \node[anchor=north west,scale=1.2] at (\pos+1.1,-5.0) {$\phantom{Q}\makebox[0pt][r]{c}=\mqty[\x\\?]$};
             \node[anchor=north west] at (\pos+1.1,-6.3) {(upper bound)\\\large{$\leq \thresColor{\thres}$}};
         }
 
@@ -118,7 +118,7 @@
     };
     \node[font=\LARGE,align=left] at (13.5,-1.5) {
     Evaluate: \\[0.9em]
-    ${\displaystyle \max_{c,Q}\qty{\abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x}}}$
+    ${\displaystyle \max_{Q,c}\qty{\abs{\sum_{x=0}^{2^n-1} -1^{x^\top Q x} i^{c^\top x} P_x}}}$
     };
 
 \end{tikzpicture}
