@@ -58,3 +58,8 @@ constexpr __int128_t total_stabilizer_group_size(int n) {
   }
   return ret;
 }
+
+inline double abs2(const std::complex<double>& x) {
+  return x.real() * x.real() + x.imag() * x.imag();
+}
+inline double abs2(const double& x) { return x * x; }

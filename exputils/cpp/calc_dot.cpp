@@ -69,7 +69,7 @@ struct dotCalculator {
     {
       values.insert(values.end(), std::make_move_iterator(values_local.begin()),
                     std::make_move_iterator(values_local.end()));
-      if (values.size() > MAX_VALUES_SIZE) truncate_values();
+      if (values.size() > 2 * MAX_VALUES_SIZE) truncate_values();
     }
   }
 
@@ -145,12 +145,10 @@ struct dotCalculator {
     return stk1;
   }
 
-  vec<std::pair<double, INT>> calc_dot_sub(const int k_orig, const vec<VAL>& Ps_orig,
+  vec<std::pair<double, INT>> calc_dot_sub(const int k_orig, vec<VAL>& Ps_list,
                                            const INT ret_idx_orig) {
-    assert(1 <= k_orig && int(Ps_orig.size()) == (1 << k_orig));
     // Ps_list[(1<<k)+i] = Ps_list[(1<<k)^i] = k-th Ps[i] (0<=i<(1<<k))
-    vec<VAL> Ps_list(1 << (k_orig + 1), 0);
-    for (int i = 0; i < (1 << k_orig); i++) Ps_list[(1 << k_orig) ^ i] = Ps_orig[i];
+    assert(1 <= k_orig && int(Ps_list.size()) == (1 << (k_orig + 1)));
 
     // we use non-recursive dfs. The each step of dfs is divided into two parts:
     // 1. set the value of c[k] and Q[k,k] (stk1)
@@ -158,7 +156,8 @@ struct dotCalculator {
     vec<INT> stk1;
     vec<std::tuple<int, int_fast8_t, INT, bool, bool>> stk2;
 
-    // in order to reduce critical section, we save values to local variable temporarily
+    // in order to reduce critical section,
+    // we save values to local variable temporarily
     vec<std::pair<double, INT>> values_local;
     // +:stk1 -:stk2
     vi ks;
@@ -173,22 +172,23 @@ struct dotCalculator {
         INT ret_idx = stk1.back();
         stk1.pop_back();
         if (k == 1) {
+          double threshold2 = threshold * threshold;
           // 1+1, 1-1
-          double val = std::abs(Ps_list[2 + 0] + Ps_list[2 + 1]);
-          if (val > threshold) values_local.emplace_back(val, ret_idx);
+          double val2 = abs2(Ps_list[2 + 0] + Ps_list[2 + 1]);
+          if (val2 > threshold2) values_local.emplace_back(std::sqrt(val2), ret_idx);
           ret_idx++;
-          val = std::abs(Ps_list[2 + 0] - Ps_list[2 + 1]);
-          if (val > threshold) values_local.emplace_back(val, ret_idx);
+          val2 = abs2(Ps_list[2 + 0] - Ps_list[2 + 1]);
+          if (val2 > threshold2) values_local.emplace_back(std::sqrt(val2), ret_idx);
           ret_idx++;
           // 1+1i, 1-1i
           if constexpr (is_real_mode) {
             ret_idx += 2;
           } else {
-            val = std::abs(Ps_list[2 + 0] + COMPLEX(0, 1) * Ps_list[2 + 1]);
-            if (val > threshold) values_local.emplace_back(val, ret_idx);
+            val2 = abs2(Ps_list[2 + 0] + COMPLEX(0, 1) * Ps_list[2 + 1]);
+            if (val2 > threshold2) values_local.emplace_back(std::sqrt(val2), ret_idx);
             ret_idx++;
-            val = std::abs(Ps_list[2 + 0] - COMPLEX(0, 1) * Ps_list[2 + 1]);
-            if (val > threshold) values_local.emplace_back(val, ret_idx);
+            val2 = abs2(Ps_list[2 + 0] - COMPLEX(0, 1) * Ps_list[2 + 1]);
+            if (val2 > threshold2) values_local.emplace_back(std::sqrt(val2), ret_idx);
             ret_idx++;
           }
         } else {
@@ -254,7 +254,9 @@ struct dotCalculator {
 #pragma omp parallel for schedule(dynamic) num_threads(omp_get_max_threads())
     for (int i = 0; i < int(stk1.size()); i++) {
       auto [_, k, PsLocal, ret_idx] = stk1[i];
-      auto res = calc_dot_sub(k, PsLocal, ret_idx);
+      vec<VAL> Ps_list(1 << (k + 1));
+      for (int x = 0; x < (1 << k); x++) Ps_list[(1 << k) ^ x] = PsLocal[x];
+      auto res = calc_dot_sub(k, Ps_list, ret_idx);
       if (!res.empty()) add_to_values(res);
       std::get<2>(stk1[i]).clear();
     }
@@ -281,9 +283,9 @@ struct dotCalculator {
       // The complement of R can be expressed by basis vectors,
       // where each basis vector has only one element of 1 and the others are 0.
       // t_mask is a sum of the basis vectors.
-      INT ret_idx = (INT(1) << n);
+      INT ret_idx = ((INT)(1) << n);
       for (int _k = 1; _k < k; _k++)
-        ret_idx += q_binomial(n, _k) * (INT(1) << (n + _k * (_k + 1) / 2));
+        ret_idx += q_binomial(n, _k) * ((INT)(1) << (n + _k * (_k + 1) / 2));
       RREF_generator rref_gen(n, k);
       double sqrt2k = 1 / std::pow(std::sqrt(2), k);
       vec<VAL> psi_1Over2k = psi;
@@ -291,7 +293,7 @@ struct dotCalculator {
       if (k < LARGE_K) {
         vec<INT> ret_idxs = {ret_idx};
         for (int rref_idx = 0; rref_idx < rref_gen.q_binom; rref_idx++) {
-          ret_idx += (INT(1) << (n + k * (k + 1) / 2));
+          ret_idx += ((INT)(1) << (n + k * (k + 1) / 2));
           ret_idxs.push_back(ret_idx);
         }
 #pragma omp parallel for schedule(dynamic) num_threads(omp_get_max_threads())
@@ -300,9 +302,11 @@ struct dotCalculator {
           INT ret_idx_local = ret_idxs[rref_idx];
           vec<std::pair<double, INT>> values_local;
           int t = 0;
+          // Ps_list[(1<<k)+i] = Ps_list[(1<<k)^i] = k-th Ps[i] (0<=i<(1<<k))
+          vec<VAL> Ps_list(1 << (k + 1));
           while (true) {
-            vec<VAL> Ps = arange_psi_by_t(k, t, row_idxs, psi_1Over2k);
-            auto res = calc_dot_sub(k, Ps, ret_idx_local);
+            arange_psi_by_t<VAL, true>(k, t, row_idxs, Ps_list, psi_1Over2k);
+            auto res = calc_dot_sub(k, Ps_list, ret_idx_local);
             if (!res.empty()) {
               values_local.insert(values_local.end(),
                                   std::make_move_iterator(res.begin()),
@@ -325,8 +329,9 @@ struct dotCalculator {
         for (int rref_idx = 0; rref_idx < rref_gen.q_binom; rref_idx++) {
           const auto& [row_idxs, t_mask] = rref_gen.get(rref_idx, false);
           int t = 0;
+          vec<VAL> Ps(1 << k);
           while (true) {
-            vec<VAL> Ps = arange_psi_by_t(k, t, row_idxs, psi_1Over2k);
+            arange_psi_by_t<VAL, false>(k, t, row_idxs, Ps, psi_1Over2k);
             calc_dot_sub_large_k(k, Ps, ret_idx);
             ret_idx += kkk12s[k];
             t = (t + ~t_mask + 1) & t_mask;
@@ -368,12 +373,12 @@ int main() {
     is_dual_mode = cnpy::npz_load("temp_in.npz")["is_dual_mode"].data<bool>()[0];
     MAX_VALUES_SIZE = cnpy::npz_load("temp_in.npz")["K"].data<int>()[0];
   } catch (const std::exception& e) {
-    n = 6;
+    n = 10;
     psi.resize(1 << n);
     std::mt19937 mt(1);
     for (int i = 0; i < 1 << n; i++)
-      psi[i] = COMPLEX(std::uniform_real_distribution<double>(-0.5, 0.5)(mt),
-                       std::uniform_real_distribution<double>(-0.5, 0.5)(mt));
+      psi[i] = COMPLEX(std::uniform_real_distribution<double>(-1, 1)(mt),
+                       std::uniform_real_distribution<double>(0, 0)(mt));
     is_dual_mode = true;
     MAX_VALUES_SIZE = 10000;
   }

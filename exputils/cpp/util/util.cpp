@@ -1,12 +1,15 @@
 #pragma once
 #include "base.cpp"
 
-template <typename VAL>
-vec<VAL> arange_psi_by_t(int k, int t, const vi& row_idxs,
-                         const vec<VAL>& psi_1Over2k) {
-  vec<VAL> Ps(1 << k);
-  for (int x = 0; x < (1 << k); x++) Ps[x] = psi_1Over2k[row_idxs[x] ^ t];
-  return Ps;
+template <typename VAL, bool is_list>
+void arange_psi_by_t(int k, int t, const vi& row_idxs, vec<VAL>& Ps_or_Ps_list,
+                     const vec<VAL>& psi_1Over2k) {
+  if constexpr (is_list) {
+    for (int x = 0; x < (1 << k); x++)
+      Ps_or_Ps_list[(1 << k) ^ x] = psi_1Over2k[row_idxs[x] ^ t];
+  } else {
+    for (int x = 0; x < (1 << k); x++) Ps_or_Ps_list[x] = psi_1Over2k[row_idxs[x] ^ t];
+  }
 }
 
 COMPLEX rotate_complex(const COMPLEX x) {

@@ -6,7 +6,7 @@
             "command": "C:\\Program Files\\mingw64\\bin\\g++.exe",
             // "command": "/usr/bin/g++-10",
             "args": [
-                "-g",
+                // "-g",
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}.exe",
