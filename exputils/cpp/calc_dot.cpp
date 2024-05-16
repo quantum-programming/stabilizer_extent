@@ -7,16 +7,17 @@
 
 // kkk12 represents the number of stabilizer states for each k with fixed R and t,
 // which means the number of combinations of Q and c.
-constexpr ll calc_kkk12(int k) { return 1ll << (k + k * (k + 1) / 2); }
-static const ll kkk12s[11] = {calc_kkk12(0), calc_kkk12(1), calc_kkk12(2),
-                              calc_kkk12(3), calc_kkk12(4), calc_kkk12(5),
-                              calc_kkk12(6), calc_kkk12(7), calc_kkk12(8),
-                              calc_kkk12(9), calc_kkk12(10)};
+template <typename INT>
+constexpr INT calc_kkk12(int k) {
+  if constexpr (std::is_same<INT, ll>::value)
+    if (k == 10) return 0;
+  return INT(1) << (k + k * (k + 1) / 2);
+}
 
 template <typename INT, typename VAL, bool is_real_mode = false,
           bool is_dual_mode = false>
 struct dotCalculator {
-  // compute top MAX_VALUES_SIZE values of |<psi|phi>|
+  // compute top MAX_VALUES_SIZE values of |<phi|psi>|
   dotCalculator(size_t MAX_VALUES_SIZE) : MAX_VALUES_SIZE(MAX_VALUES_SIZE) {}
 
   auto calc_dot(int n, const vc& psi) {
@@ -46,11 +47,15 @@ struct dotCalculator {
     return result;
   }
 
- private:
   Timer timer1;
   vec<std::pair<double, INT>> values;
   double threshold = 0.0;
   size_t MAX_VALUES_SIZE;
+
+  static constexpr INT kkk12s[11] = {
+      calc_kkk12<INT>(0), calc_kkk12<INT>(1), calc_kkk12<INT>(2), calc_kkk12<INT>(3),
+      calc_kkk12<INT>(4), calc_kkk12<INT>(5), calc_kkk12<INT>(6), calc_kkk12<INT>(7),
+      calc_kkk12<INT>(8), calc_kkk12<INT>(9), calc_kkk12<INT>(10)};
 
   template <bool is_final = false>
   void truncate_values() {
@@ -78,8 +83,9 @@ struct dotCalculator {
     // max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} P_x| < min(t1, sqrt(t2))
     double t1 = calc_threshold_1(k, Ps_begin);
     if (t1 < threshold) return true;
-    if (!is_real_mode && t1 < 1.1 * threshold)
-      if (calc_threshold_2(k, Ps_begin) < threshold * threshold) return true;
+    if constexpr (!is_real_mode)
+      if (t1 < 1.1 * threshold && calc_threshold_2(k, Ps_begin) < threshold * threshold)
+        return true;
     return false;
   }
 
@@ -91,10 +97,11 @@ struct dotCalculator {
     vec<VAL> next(1 << (k - 1));
     for (bool c_0 : {false, true})
       for (bool q_00 : {false, true}) {
-        if (is_real_mode && c_0) {
-          ret_idx += kkk12s[k] >> 2;
-          continue;
-        }
+        if constexpr (is_real_mode)
+          if (c_0) {
+            ret_idx += kkk12s[k] >> 2;
+            continue;
+          }
         if constexpr (is_real_mode)
           next[0] = Ps[0] + Ps[1] * (q_00 ? -1 : 1);
         else
@@ -194,10 +201,11 @@ struct dotCalculator {
           if (check_branch_cut(k, Ps_list.begin() + (1 << k))) continue;
           for (bool c_0 : {false, true})
             for (bool q_00 : {false, true}) {
-              if (is_real_mode && c_0) {
-                ret_idx += kkk12s[k] >> 2;
-                continue;
-              }
+              if constexpr (is_real_mode)
+                if (c_0) {
+                  ret_idx += kkk12s[k] >> 2;
+                  continue;
+                }
               stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3), c_0, q_00);
               stk2.emplace_back(0, 1, ret_idx, c_0, q_00);
               ks.push_back(-k);
@@ -246,7 +254,7 @@ struct dotCalculator {
   void calc_dot_sub_large_k(const int n, const int k, const vec<VAL>& Ps, INT ret_idx) {
     // If k is large, the size of rref (which means R and t) becomes too small to
     // parallelize. Thus, we parallelize by the first step of the non-recursive dfs.
-    assert(k == n && int(Ps.size()) == (1 << k));
+    assert(int(Ps.size()) == (1 << k));
     if (check_branch_cut(k, Ps.begin())) return;
     auto stk1 = dfs_sub(k, Ps, -1, ret_idx);
 
@@ -282,9 +290,9 @@ struct dotCalculator {
       // The complement of R can be expressed by basis vectors,
       // where each basis vector has only one element of 1 and the others are 0.
       // t_mask is a sum of the basis vectors.
-      INT ret_idx = ((INT)(1) << n);
+      INT ret_idx = (INT(1) << n);
       for (int _k = 1; _k < k; _k++)
-        ret_idx += q_binomial(n, _k) * ((INT)(1) << (n + _k * (_k + 1) / 2));
+        ret_idx += q_binomial(n, _k) * (INT(1) << (n + _k * (_k + 1) / 2));
       RREF_generator rref_gen(n, k);
       double sqrt2k = 1 / std::pow(std::sqrt(2), k);
       vec<VAL> psi_1Over2k = psi;
@@ -292,7 +300,7 @@ struct dotCalculator {
       if (k < n) {
         vec<INT> ret_idxs = {ret_idx};
         for (int rref_idx = 0; rref_idx < rref_gen.q_binom; rref_idx++) {
-          ret_idx += ((INT)(1) << (n + k * (k + 1) / 2));
+          ret_idx += (INT(1) << (n + k * (k + 1) / 2));
           ret_idxs.push_back(ret_idx);
         }
 #pragma omp parallel for schedule(dynamic) num_threads(omp_get_max_threads())
@@ -379,7 +387,7 @@ int main() {
       psi[i] = COMPLEX(std::uniform_real_distribution<double>(-1, 1)(mt),
                        std::uniform_real_distribution<double>(0, 0)(mt));
     is_dual_mode = true;
-    MAX_VALUES_SIZE = 10000;
+    MAX_VALUES_SIZE = 1;
   }
   is_real_mode = true;
   for (int i = 0; i < 1 << n; i++)
