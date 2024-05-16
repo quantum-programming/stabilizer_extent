@@ -2,23 +2,11 @@
 #include "base.cpp"
 
 namespace viewer {
-constexpr int INF = 1001001001;
-constexpr long long INFll = 1001001001001001001;
 
 template <class T>
 std::string f(T i) {
   std::string S;
-  if (i == INF) {
-    S = "INF";
-  } else if (i == -INF) {
-    S = "-INF";
-  } else if (i == INFll) {
-    S = "INFll";
-  } else if (i == -INFll) {
-    S = "-INFll";
-  } else {
-    S = std::to_string(i);
-  }
+  S = std::to_string(i);
   return std::string(std::max(0, 3 - int(S.size())), ' ') + S;
 }
 
