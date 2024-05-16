@@ -51,7 +51,6 @@ struct dotCalculator {
   vec<std::pair<double, INT>> values;
   double threshold = 0.0;
   size_t MAX_VALUES_SIZE;
-  static constexpr int LARGE_K = 7;
 
   static constexpr INT kkk12s[11] = {
       calc_kkk12<INT>(0), calc_kkk12<INT>(1), calc_kkk12<INT>(2), calc_kkk12<INT>(3),
@@ -84,8 +83,9 @@ struct dotCalculator {
     // max_{Q,c} |sum_{x} (-1)^{x^T Q x} i^{c^T x} P_x| < min(t1, sqrt(t2))
     double t1 = calc_threshold_1(k, Ps_begin);
     if (t1 < threshold) return true;
-    if (!is_real_mode && t1 < 1.1 * threshold)
-      if (calc_threshold_2(k, Ps_begin) < threshold * threshold) return true;
+    if constexpr (!is_real_mode)
+      if (t1 < 1.1 * threshold && calc_threshold_2(k, Ps_begin) < threshold * threshold)
+        return true;
     return false;
   }
 
@@ -97,10 +97,11 @@ struct dotCalculator {
     vec<VAL> next(1 << (k - 1));
     for (bool c_0 : {false, true})
       for (bool q_00 : {false, true}) {
-        if (is_real_mode && c_0) {
-          ret_idx += kkk12s[k] >> 2;
-          continue;
-        }
+        if constexpr (is_real_mode)
+          if (c_0) {
+            ret_idx += kkk12s[k] >> 2;
+            continue;
+          }
         if constexpr (is_real_mode)
           next[0] = Ps[0] + Ps[1] * (q_00 ? -1 : 1);
         else
@@ -200,10 +201,11 @@ struct dotCalculator {
           if (check_branch_cut(k, Ps_list.begin() + (1 << k))) continue;
           for (bool c_0 : {false, true})
             for (bool q_00 : {false, true}) {
-              if (is_real_mode && c_0) {
-                ret_idx += kkk12s[k] >> 2;
-                continue;
-              }
+              if constexpr (is_real_mode)
+                if (c_0) {
+                  ret_idx += kkk12s[k] >> 2;
+                  continue;
+                }
               stk2.emplace_back(1, 1, ret_idx + (kkk12s[k] >> 3), c_0, q_00);
               stk2.emplace_back(0, 1, ret_idx, c_0, q_00);
               ks.push_back(-k);
@@ -252,7 +254,7 @@ struct dotCalculator {
   void calc_dot_sub_large_k(const int k, const vec<VAL>& Ps, INT ret_idx) {
     // If k is large, the size of rref (which means R and t) becomes too small to
     // parallelize. Thus, we parallelize by the first step of the non-recursive dfs.
-    assert(LARGE_K <= k && int(Ps.size()) == (1 << k));
+    assert(int(Ps.size()) == (1 << k));
     if (check_branch_cut(k, Ps.begin())) return;
     auto stk1 = dfs_sub(k, Ps, -1, ret_idx);
 
@@ -295,7 +297,7 @@ struct dotCalculator {
       double sqrt2k = 1 / std::pow(std::sqrt(2), k);
       vec<VAL> psi_1Over2k = psi;
       for (auto& x : psi_1Over2k) x *= sqrt2k;
-      if (k < LARGE_K) {
+      if (k < n) {
         vec<INT> ret_idxs = {ret_idx};
         for (int rref_idx = 0; rref_idx < rref_gen.q_binom; rref_idx++) {
           ret_idx += (INT(1) << (n + k * (k + 1) / 2));
