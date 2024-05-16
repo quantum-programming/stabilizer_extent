@@ -2,7 +2,6 @@ import numpy as np
 
 from numba import njit
 from itertools import combinations
-from typing import Generator, Tuple
 
 from exputils.math.gauss_jordan import gauss_jordan_get_only_rank
 from exputils.math.q_binom import q_binomial
@@ -23,7 +22,7 @@ def make_mat(
     return mat
 
 
-def enumerate_RREF(n: int, k: int) -> Generator[Tuple[np.ndarray, int], None, None]:
+def enumerate_RREF(n: int, k: int, is_fast_mode: bool = False):
     """enumerate all k times n RREF matrixes (row full rank) over F_2.
 
     Reference:
@@ -67,8 +66,11 @@ def enumerate_RREF(n: int, k: int) -> Generator[Tuple[np.ndarray, int], None, No
         Js = np.array(Js, dtype=np.int32)
         not_col_idxs = np.array(not_col_idxs, dtype=np.int32)
 
-        for bit in range(1 << sz):
-            yield (make_mat(bit, Is, Js, not_col_idxs, default_matrix), complement)
+        if is_fast_mode:
+            yield (Is, Js, not_col_idxs, default_matrix, complement)
+        else:
+            for bit in range(1 << sz):
+                yield (make_mat(bit, Is, Js, not_col_idxs, default_matrix), complement)
         cnt += 1 << sz
 
     assert cnt == q_binomial(n, k)

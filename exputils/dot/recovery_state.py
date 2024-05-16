@@ -4,8 +4,10 @@ import numpy as np
 
 from exputils.Amat.get import get_Amat_sparse
 from exputils.Amat.recover import make_state_from_kQctR
-from exputils.math.rref import enumerate_RREF
+from exputils.math.rref import enumerate_RREF, make_mat
 from scipy.sparse import csc_matrix
+
+from exputils.stabilizer_group import total_stabilizer_group_size
 
 
 def make_reordering(k: int) -> List[int]:
@@ -63,40 +65,61 @@ def recovery_states_from_idxs(n: int, idxs: List[int]) -> csc_matrix:
                 idx = idxs[-1]
         else:
             reordering = make_reordering(k)
-            for R, t_mask in enumerate_RREF(n, k):
-                t = 0
-                while True:
-                    r += 1 << (k * (k + 1) // 2 + k)
-                    while idx < r:
-                        Qc_orig = idx - (r - (1 << (k * (k + 1) // 2 + k)))
-                        Qc = 0
-                        for i in range(k * (k + 1) // 2 + k):
-                            Qc |= ((Qc_orig >> reordering[i]) & 1) << i
-                        Q = Qc >> k
-                        c = Qc & ((1 << k) - 1)
-                        temp = make_state_from_kQctR(n, k, Q, c, t, R)
-                        csc_indices.extend(temp[0])
-                        csc_data.extend(temp[1])
-                        csc_indptr.append(len(csc_indices))
-                        idxs.pop()
-                        if len(idxs) == 0:
-                            return csc_matrix(
-                                (csc_data, csc_indices, csc_indptr),
-                                shape=(1 << n, len(csc_indptr) - 1),
-                                dtype=np.complex128,
-                            )
-                        idx = idxs[-1]
-                    t = (t + ~t_mask + 1) & t_mask
-                    if t == 0:
-                        break
+            for Is, Js, not_col_idxs, default_matrix, t_mask in enumerate_RREF(
+                n, k, is_fast_mode=True
+            ):
+                for bit in range(1 << len(Is)):
+                    if idx >= r + (1 << (n + k * (k + 1) // 2)):
+                        r += 1 << (n + k * (k + 1) // 2)
+                        continue
+                    R = make_mat(bit, Is, Js, not_col_idxs, default_matrix)
+                    t = 0
+                    while True:
+                        r += 1 << (k + k * (k + 1) // 2)
+                        while idx < r:
+                            Qc_orig = idx - (r - (1 << (k * (k + 1) // 2 + k)))
+                            Qc = 0
+                            for i in range(k * (k + 1) // 2 + k):
+                                Qc |= ((Qc_orig >> reordering[i]) & 1) << i
+                            Q = Qc >> k
+                            c = Qc & ((1 << k) - 1)
+                            temp = make_state_from_kQctR(n, k, Q, c, t, R)
+                            csc_indices.extend(temp[0])
+                            csc_data.extend(temp[1])
+                            csc_indptr.append(len(csc_indices))
+                            idxs.pop()
+                            if len(idxs) == 0:
+                                return csc_matrix(
+                                    (csc_data, csc_indices, csc_indptr),
+                                    shape=(1 << n, len(csc_indptr) - 1),
+                                    dtype=np.complex128,
+                                )
+                            idx = idxs[-1]
+                        t = (t + ~t_mask + 1) & t_mask
+                        if t == 0:
+                            break
     assert False, "This line should not be reached"
 
 
 def test_recovery_states_from_idxs():
+    # import random
+    # n = 10
+    # t_s_g_s = total_stabilizer_group_size(n)
+    # random_indices = []
+    # for _ in range(10):
+    #     log2 = int(np.log2(float(t_s_g_s)))
+    #     idx = 0
+    #     for i in range(log2):
+    #         idx |= random.randint(0, 1) << i
+    #     if idx >= t_s_g_s:
+    #         idx = t_s_g_s - 1
+    #     random_indices.append(idx)
+    # random_indices = list(set(random_indices))
+    # recovery_states_from_idxs(n, random_indices)
+
     for n in [1, 2, 3]:
         Amat_actual = get_Amat_sparse(n)
         Amat_recovered = recovery_states_from_idxs(n, list(range(Amat_actual.shape[1])))
-        print(Amat_recovered.toarray())
         for _ in range(5):
             random_vec = np.random.rand(Amat_actual.shape[0]) + 1j * np.random.rand(
                 Amat_actual.shape[0]
