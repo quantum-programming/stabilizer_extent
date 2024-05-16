@@ -36,7 +36,7 @@ def get_topK_Amat(
     if res2.size > 1 or res2[0] != 0:
         idxs = [(int(x1) << 62) + int(x2) for x1, x2 in zip(res1, res2)]
         t_s_g_s = total_stabilizer_group_size(n)
-        assert all(0 <= x <= t_s_g_s for x in idxs)
+        assert all(0 <= x < t_s_g_s for x in idxs)
         return recovery_states_from_idxs(n, idxs)
     else:
         return csc_matrix((2**n, 0), dtype=np.complex128)
