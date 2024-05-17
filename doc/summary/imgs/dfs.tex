@@ -47,6 +47,24 @@
     \renewcommand{\baselinestretch}{1.0}
     }
 
+    \newcommand{\Arrows}[3]{
+        \begin{scope}[xshift=#1.0cm, yshift=-#2.0cm]
+            \draw[thick,->] (0.5,-0.02) -- (0.5,-0.96); % node[xshift=8,yshift=7] {$+$};
+            \draw[thick,->] (1.5,-0.5) -- (1.5,-0.96); % node[xshift=8,yshift=7] {$-$};
+            \draw[thick,->] (2.5,-0.5) -- (2.5,-0.96); % node[xshift=8,yshift=7] {$+i$};
+            \draw[thick,->] (3.5,-0.5) -- (3.5,-0.96); % node[xshift=8,yshift=7] {$-i$};
+            \draw[thick,  ] (0.5,-0.5) -- (3.5,-0.5);
+        \end{scope}}
+    \draw[thick,->] (0.5 ,-3.02) -- (0.5 ,-3.96);
+    \draw[thick,->] (5.5 ,-3.5) -- (5.5 ,-3.96);
+    \draw[thick,->] (11.5,-3.5) -- (11.5,-3.96);
+    \draw[thick,->] (16.5,-3.5) -- (16.5,-3.96);
+    \draw[thick,  ] (0.5 ,-3.5) -- (16.5,-3.5);
+    \Arrows{0}{7}{1}
+    \Arrows{5}{7}{1}
+    \Arrows{11}{7}{1}
+    \Arrows{16}{7}{1}
+
     \foreach \pos/\a/\b/\c/\d/\x/\y/\z/\thres/\thresColor in {
             0/+/+/+/+/0/0/0/1.25/\black,
             5/+/+/+/-/0/0/1/1.10/\black,
@@ -82,24 +100,6 @@
             \renewcommand{\baselinestretch}{1.0}
             % \node[font=\large] at (\x+0.5,-11.5) {$\i$};
         }
-
-    \newcommand{\Arrows}[3]{
-        \begin{scope}[xshift=#1.0cm, yshift=-#2.0cm]
-            \draw[thick,->] (0.5,-0.0) -- (0.5,-1.0); % node[xshift=8,yshift=7] {$+$};
-            \draw[thick,->] (1.5,-0.5) -- (1.5,-1.0); % node[xshift=8,yshift=7] {$-$};
-            \draw[thick,->] (2.5,-0.5) -- (2.5,-1.0); % node[xshift=8,yshift=7] {$+i$};
-            \draw[thick,->] (3.5,-0.5) -- (3.5,-1.0); % node[xshift=8,yshift=7] {$-i$};
-            \draw[thick,  ] (0.5,-0.5) -- (3.5,-0.5);
-        \end{scope}}
-    \draw[thick,->] (0.5 ,-3.0) -- (0.5 ,-4.0);
-    \draw[thick,->] (5.5 ,-3.5) -- (5.5 ,-4.0);
-    \draw[thick,->] (11.5,-3.5) -- (11.5,-4.0);
-    \draw[thick,->] (16.5,-3.5) -- (16.5,-4.0);
-    \draw[thick,  ] (0.5 ,-3.5) -- (16.5,-3.5);
-    \Arrows{0}{7}{1}
-    \Arrows{5}{7}{1}
-    \Arrows{11}{7}{1}
-    \Arrows{16}{7}{1}
 
     \draw[ultra thick,red] (11,-7.1) -- (15,-7.9);
     \draw[ultra thick,red] (11,-7.9) -- (15,-7.1);
