@@ -1,5 +1,13 @@
 # stabilizer extent
 
+![A_matrix](doc/summary/imgs/Amat.png)
+
+This repository provides source code for **Stabilizer Extent** calculation, **stabilizer fidelity** calculation, and **generating all the pure stabilizer states** in computational-basis.
+
+This is also the supplemental material for our paper,
+**"Fast Computation of Stabilizer Extent"**(2024).
+
+
 Compute stabilizer extent.
 
 ## How to run the code
@@ -38,7 +46,8 @@ pip install openfermion
 
 ### 3. (optional) compile C++ code
 
-We highly recommended to compile the C++ code to accelerate the computation.
+Although you can run the tutorial.ipynb without this step,
+but we highly recommended to compile the C++ code to accelerate the computation.
 The only file you have to compile is `exputils/cpp/calc_dot.cpp`.
 
 You can compile the C++ code by running the following command:
@@ -47,3 +56,26 @@ You can compile the C++ code by running the following command:
 pwd # check the current directory is path/to/stabilizer_extent
 g++ exputils/cpp/calc_dot.cpp -o exputils/cpp/calc_dot.exe -std=c++17 -O2 -mtune=native -march=native -fopenmp -lz
 ```
+
+The meaning of each option is as follows:
+
+| option | meaning |
+|:---|:---|
+| -o | output file name |
+| -std=c++17 | use C++17 |
+| -lz | use zlib (to use npz files in C++)|
+| -O2 | optimization level 2 (-O3 might be worse than -O2) |
+| -DNDEBUG | disable assertions (if you want to debug, remove this option) |
+| -mtune=native | optimize for the machine you are using |
+| -march=native | optimize for the machine you are using |
+| -fopenmp | use OpenMP (for parallelization) |
+
+## Tutorial
+
+The tutorial notebook is available at [tutorial.ipynb](tutorial.ipynb).
+
+## License
+
+Copyright (c) 2024 Nobuyuki Yoshioka
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
