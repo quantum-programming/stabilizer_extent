@@ -11,6 +11,7 @@ def make_random_quantum_state(kind: str, n: int, seed: int) -> np.ndarray:
     if kind == "pure":
         ket = _make_random_pure_state(n, seed)
     elif kind == "real":
+        np.random.seed(seed)
         ket = np.random.rand(2**n) - 0.5
         ket = ket / np.linalg.norm(ket)
         ket = ket.astype(np.complex128)
