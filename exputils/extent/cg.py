@@ -10,9 +10,7 @@ def calculate_extent_CG(
     # Even if verbose=False, print some log.
     print(f"CG: {n=}, {method=}")
     print("start: calculate dots")
-    if n <= 7:
-        K = 1000
-    elif n <= 8:
+    if n <= 8:
         K = 10000
     else:
         K = 100000
