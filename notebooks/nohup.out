@@ -1,0 +1,45 @@
+n=9
+CG: n=9, method='mosek'
+start: calculate dots
+[k|progress|range]: 1 | 5.23776e+05/4.28667e+16 | [0.00007, 0.14879] | 72[ms]
+[k|progress|range]: 2 | 1.78434e+08/4.28667e+16 | [0.11168, 0.17702] | 184[ms]
+[k|progress|range]: 3 | 2.60008e+10/4.28667e+16 | [0.14531, 0.20411] | 1024[ms]
+[k|progress|range]: 4 | 1.76126e+12/4.28667e+16 | [0.17229, 0.22809] | 8161[ms]
+[k|progress|range]: 5 | 5.72896e+13/4.28667e+16 | [0.18935, 0.24062] | 78174[ms]
+[k|progress|range]: 6 | 9.03436e+14/4.28667e+16 | [0.20592, 0.26542] | 623397[ms]
+[k|progress|range]: 7 | 6.87310e+15/4.28667e+16 | [0.21404, 0.26542] | 2892485[ms]
+[k|progress|range]: 8 | 2.48523e+16/4.28667e+16 | [0.21981, 0.26693] | 7720504[ms]
+[k|progress|range]: 9 | 4.28667e+16/4.28667e+16 | [0.22257, 0.26693] | 11582914[ms]
+ calculation time : 11582918[ms]
+iteration: 1 / 30, Amat.shape = (512, 100000)
+start: solve SOCP
+stabilizer_extent=17.544989853248886
+start: calculate dual dots
+[k|progress|range]: 1 | 5.23776e+05/4.28667e+16 | [nan, nan] | 17[ms]
+[k|progress|range]: 2 | 1.78434e+08/4.28667e+16 | [nan, nan] | 66[ms]
+[k|progress|range]: 3 | 2.60008e+10/4.28667e+16 | [nan, nan] | 661[ms]
+[k|progress|range]: 4 | 1.76126e+12/4.28667e+16 | [nan, nan] | 2741[ms]
+[k|progress|range]: 5 | 5.72896e+13/4.28667e+16 | [0.97005, 1.00000] | 14207[ms]
+[k|progress|range]: 6 | 9.03436e+14/4.28667e+16 | [0.97003, 1.02805] | 174232[ms]
+[k|progress|range]: 7 | 6.87310e+15/4.28667e+16 | [0.97001, 1.05583] | 1271387[ms]
+[k|progress|range]: 8 | 2.48523e+16/4.28667e+16 | [0.97000, 1.05583] | 4724559[ms]
+[k|progress|range]: 9 | 4.28667e+16/4.28667e+16 | [0.97000, 1.05583] | 8178711[ms]
+ calculation time : 8178711[ms]
+# of violations(LB): 330
+iteration: 2 / 30, Amat.shape = (512, 20300)
+start: solve SOCP
+stabilizer_extent=17.517964047441698
+start: calculate dual dots
+[k|progress|range]: 1 | 5.23776e+05/4.28667e+16 | [nan, nan] | 15[ms]
+[k|progress|range]: 2 | 1.78434e+08/4.28667e+16 | [nan, nan] | 76[ms]
+[k|progress|range]: 3 | 2.60008e+10/4.28667e+16 | [nan, nan] | 672[ms]
+[k|progress|range]: 4 | 1.76126e+12/4.28667e+16 | [nan, nan] | 2761[ms]
+[k|progress|range]: 5 | 5.72896e+13/4.28667e+16 | [0.97024, 1.00000] | 13456[ms]
+[k|progress|range]: 6 | 9.03436e+14/4.28667e+16 | [0.97003, 1.00000] | 161862[ms]
+[k|progress|range]: 7 | 6.87310e+15/4.28667e+16 | [0.97001, 1.00000] | 1177147[ms]
+[k|progress|range]: 8 | 2.48523e+16/4.28667e+16 | [0.97000, 1.00000] | 4384918[ms]
+[k|progress|range]: 9 | 4.28667e+16/4.28667e+16 | [0.97000, 1.00000] | 7605576[ms]
+ calculation time : 7605576[ms]
+# of violations(LB): 0
+OPTIMAL!
+stabilizer_extent=17.517964047441698 t1-t0=27648.149233136326

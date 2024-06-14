@@ -25,5 +25,8 @@ def CG_for_data(n: int):
 
 
 if __name__ == "__main__":
-    n = 7
+    n = 9
     CG_for_data(n)
+
+# cd notebooks
+# nohup python column_generation.py &
