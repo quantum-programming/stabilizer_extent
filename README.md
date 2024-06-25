@@ -2,25 +2,18 @@
 
 ![A_matrix](doc/summary/imgs/Amat.png)
 
-This repository provides source code for **Stabilizer Extent** calculation, **stabilizer fidelity** calculation, and **generating all the pure stabilizer states** in computational-basis.
+This repository provides source code for **Stabilizer Extent** calculation, **Stabilizer Fidelity** calculation, and **generating all the pure Stabilizer States** in computational basis.
 
 This is also the supplemental material for our paper,
-**"Fast Computation of Stabilizer Extent"**(2024).
+**"Faster Computation of Stabilizer Extent"**(2024).
 
-
-Compute stabilizer extent.
+https://arxiv.org/abs/2406.16673
 
 ## How to run the code
 
 We require three setups to run the code.
 
-### 1. Install MOSEK
-
-We use MOSEK to solve SOCP.
-You can download the MOSEK software from the [MOSEK website](https://www.mosek.com/).
-Please get a license file according to the instructions on the website.
-
-### 2. Install the required python libraries
+### 1. Install the required python libraries
 
 It is recommended that you prepare a new virtual Python environment and run
 `pip install -r requirement.txt`
@@ -44,16 +37,23 @@ pip install matplotlib
 pip install openfermion
 ```
 
-### 3. (optional) compile C++ code
+### 2. (optional) Install MOSEK
 
-Although you can run the tutorial.ipynb without this step,
-but we highly recommended to compile the C++ code to accelerate the computation.
+Although you can partially run the tutorial.ipynb without this step, but we highly recommended to install MOSEK to accelerate the computation.
+
+We use MOSEK to solve SOCP.
+You can download the MOSEK software from the [MOSEK website](https://www.mosek.com/).
+Please get a license file according to the instructions on the website.
+
+### 3. (optional) Compile C++ code
+
+Although you can partially run the tutorial.ipynb without this step, but we highly recommended to compile the C++ code to accelerate the computation.
 The only file you have to compile is `exputils/cpp/calc_dot.cpp`.
 
 You can compile the C++ code by running the following command:
 
 ```bash
-pwd # check the current directory is path/to/stabilizer_extent
+pwd # check the current directory is path to stabilizer_extent
 g++ exputils/cpp/calc_dot.cpp -o exputils/cpp/calc_dot.exe -std=c++17 -O2 -mtune=native -march=native -fopenmp -lz
 ```
 
@@ -73,6 +73,22 @@ The meaning of each option is as follows:
 ## Tutorial
 
 The tutorial notebook is available at [tutorial.ipynb](tutorial.ipynb).
+
+## Citation
+
+If you use this code, please cite our paper:
+
+```
+@misc{hamaguchi2024fastercomputationstabilizerextent,
+      title={Faster Computation of Stabilizer Extent}, 
+      author={Hiroki Hamaguchi and Kou Hamada and Naoki Marumo and Nobuyuki Yoshioka},
+      year={2024},
+      eprint={2406.16673},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph}
+      url={https://arxiv.org/abs/2406.16673}, 
+}
+```
 
 ## License
 
