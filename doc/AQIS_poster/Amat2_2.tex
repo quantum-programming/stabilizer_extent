@@ -1,0 +1,148 @@
+\documentclass[tikz,dvipdfmx,dvipsnames]{standalone}
+
+\usepackage{amsmath, amssymb, amsthm, mathrsfs, amsfonts, dsfont}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage{physics}
+\usepackage{ifthen}
+\usepackage{setspace}
+\usepackage{mathtools}
+\usepackage{svg}
+
+\newcommand{\defeq}{\coloneqq}
+
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\cyan}[1]{\textcolor{cyan}{#1}}
+\newcommand{\gray}[1]{\textcolor{gray}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\brown}[1]{\textcolor{brown}{#1}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+\newcommand{\orange}[1]{\textcolor{orange}{#1}}
+\newcommand{\purple}[1]{\textcolor{purple}{#1}}
+\newcommand{\yellow}[1]{\textcolor{yellow}{#1}}
+\newcommand{\Magenta}[1]{\textcolor{Magenta}{#1}}
+\newcommand{\RoyalBlue}[1]{\textcolor{RoyalBlue}{#1}}
+\newcommand{\RubineRed}[1]{\textcolor{RubineRed}{#1}}
+\newcommand{\ForestGreen}[1]{\textcolor{ForestGreen}{#1}}
+\newcommand{\YellowOrange}[1]{\textcolor{YellowOrange}{#1}}
+\newcommand{\WildStrawberry}[1]{\textcolor{WildStrawberry}{#1}}
+
+\usetikzlibrary{calc,matrix,math}
+\usetikzlibrary{decorations.pathreplacing,calligraphy,shapes.arrows}
+
+\usetikzlibrary{
+  3d,
+  calc,
+  math,
+  matrix,
+  patterns,
+  backgrounds,
+  arrows.meta,
+  shapes.geometric
+}
+
+
+\definecolor{c0}{RGB}{253, 231, 36}
+\definecolor{c1}{RGB}{154, 216, 60}
+\definecolor{c2}{RGB}{91, 200, 98}
+\definecolor{c3}{RGB}{59, 81, 138}
+\definecolor{c4}{RGB}{69, 50, 127}
+
+\definecolor{cA}{HTML}{0072BD}
+\definecolor{cB}{HTML}{EDB120}
+\definecolor{cC}{HTML}{77AC30}
+\definecolor{cD}{HTML}{D95319}
+
+\begin{document}
+
+\begin{tikzpicture}[xscale=0.75]
+    \begin{scope}
+        \foreach \color/\col/\row in {
+                c2/0/0,
+                c2/0/-1,
+                c2/0/-2,
+                c3/0/-3,
+                c1/1/-1,
+                c4/1/-3,
+                c1/2/-2,
+                c4/2/-3,
+                c2/3/0,
+                c3/3/-6,
+                c2/3/-2,
+                c2/3/-8,
+                c2/4/0,
+                c2/4/-1,
+                c2/4/-7,
+                c3/4/-8,
+                c2/5/0,
+                c3/5/-1,
+                c3/5/-2,
+                c2/5/-3,
+                c1/6/-1,
+                c4/6/-8,
+                c1/7/-2,
+                c1/7/-1
+            }{
+                \draw[
+                    fill=\color,
+                    draw=\color
+                ] (\col, \row) rectangle (\col + 1, \row - 1);
+            }
+    \end{scope}
+
+    \begin{scope}
+        \foreach \row/\label in {
+                -0.5/00,
+                -1.5/01,
+                -2.5/10,
+                -3.5/11,
+                -5.5/00,
+                -6.5/01,
+                -7.5/10,
+                -8.5/11
+            }{
+                \node[anchor=center,font=\LARGE,scale=1.8]
+                at (-1.5, \row) {\label};
+            }
+
+        \node[anchor=center,font=\LARGE,rotate=90,scale=2]
+        at (-3, -2) {Real};
+        \node[anchor=center,font=\LARGE,rotate=90,scale=2]
+        at (-3, -7) {Imag};
+
+        \draw[dashed] (-3,-4.5) -- (8,-4.5);
+    \end{scope}
+
+    \draw[dashed,dash pattern=on 0.5cm off 0.5cm,red,line width=0.3cm] (8+0.2,-0.2) rectangle (60-0.2,-9+0.2);
+    \node[font=\LARGE,scale=4.5,align=center,anchor=center] at (34,-4.5) {\red{\textbf{Reduction by Overlaps}}\\$\therefore$ \textbf{Approximate} solution};
+
+
+    \node[font=\LARGE,scale=3] at (-26.666,-2) {\phantom{\textbf{Stabilizer states}}};
+
+    \begin{scope}[xscale=1.333333333333,xshift=-20cm,yshift=-4.5cm]
+        \node[regular polygon, regular polygon sides=12, minimum size=10cm,draw,line width=0.3cm,lightgray,fill=lightgray!50] (rs) at (0,0) {};
+
+        \foreach \x in {1,3,8,9}
+        \coordinate (rs\x) at ({5*sin(15+30*\x)},{5*cos(15+30*\x)});
+
+        \draw[line width=0.3cm,cC,fill=cC!50] (rs1) -- (rs3) -- (rs8) -- (rs9) -- cycle;
+
+        \filldraw[cC] (rs1) circle[radius=0.4cm];
+        \filldraw[cC] (rs3) circle[radius=0.4cm];
+        \filldraw[cC] (rs8) circle[radius=0.4cm];
+        \filldraw[cC] (rs9) circle[radius=0.4cm];
+
+        \coordinate (Rm) at ({5*sin(15+30*8)},-0.5);
+        \coordinate (Rp) at (+4.3,+0.6);
+        \coordinate (Rho) at (+12,+1.5);
+
+        \draw[cB,line width=0.3cm] (Rm) -- (Rho);
+        \filldraw[cA] (Rm) circle (0.4cm);
+        \filldraw[cD] (Rp) circle (0.4cm);
+        \filldraw (Rho) circle (0.4cm);
+    \end{scope}
+
+\end{tikzpicture}
+
+\end{document}
