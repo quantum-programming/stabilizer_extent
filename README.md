@@ -95,3 +95,7 @@ If you use this code, please cite our paper:
 Copyright (c) 2024 Nobuyuki Yoshioka
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+If you have trouble, please feel free to contact us.
