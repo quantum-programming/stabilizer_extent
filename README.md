@@ -5,9 +5,9 @@
 This repository provides source code for **Stabilizer Extent** calculation, **Stabilizer Fidelity** calculation, and **generating all the pure Stabilizer States** in computational basis.
 
 This is also the supplemental material for our paper,
-**"Faster Computation of Stabilizer Extent"**(2024).
+**"Faster computation of nonstabilizerness"**(2025).
 
-https://arxiv.org/abs/2406.16673
+https://journals-aps-org.utokyo.idm.oclc.org/prapplied/abstract/10.1103/PhysRevApplied.23.014069
 
 ## How to run the code
 
@@ -73,22 +73,6 @@ The meaning of each option is as follows:
 ## Tutorial
 
 The tutorial notebook is available at [tutorial.ipynb](tutorial.ipynb).
-
-## Citation
-
-If you use this code, please cite our paper:
-
-```
-@misc{hamaguchi2024fastercomputationstabilizerextent,
-      title={Faster Computation of Stabilizer Extent}, 
-      author={Hiroki Hamaguchi and Kou Hamada and Naoki Marumo and Nobuyuki Yoshioka},
-      year={2024},
-      eprint={2406.16673},
-      archivePrefix={arXiv},
-      primaryClass={quant-ph}
-      url={https://arxiv.org/abs/2406.16673}, 
-}
-```
 
 ## License
 
